@@ -12,6 +12,7 @@ This build integrates with the **Microsoft Defender Antivirus installation alrea
 - Defaults to report-only custom scans using `-DisableRemediation`, so files are not changed by that scan request.
 - Offers a separate, unchecked consent option to authorize Microsoft Defender's normal remediation actions. If selected and confirmed, Defender may quarantine or remove detections.
 - Provides a shortcut to Windows Security Protection history, where users can review Defender-managed actions and available restore options.
+- Reads the Windows Controlled Folder Access mode (off, audit, or enabled) from Defender preferences and provides a shortcut to the Windows ransomware-protection settings page. Danat does not silently enable or modify this Windows setting.
 - Reads redirected Defender status output asynchronously to avoid blocking if PowerShell writes more output than a pipe buffer can hold.
 - Treats Defender exit code 2 as unresolved (malware may remain unremediated or a scan error occurred), never as a clean result.
 - Requests administrator privileges because Microsoft's command-line tool requires an elevated command prompt.
@@ -20,7 +21,7 @@ This build integrates with the **Microsoft Defender Antivirus installation alrea
 
 ## Supported platform scope
 
-The desktop application is built on .NET Framework 4.8 and includes a Windows 7 SP1 compatibility mode. On Windows 7, modern Microsoft Defender PowerShell status APIs and the Windows Security settings URI are not available; the app therefore shows a clear legacy-mode notice and opens the Windows 7 Security Center instead. It can discover the legacy Microsoft Security Essentials command-line scanner if that product is already installed, but it does not install it or claim that it provides current protection. Microsoft Security Essentials and Windows 7 are out of support, so this legacy path is for compatibility/testing only and must not be treated as adequate current security. On Windows 10/11, the modern Microsoft Defender integration remains in use.
+The supported platform is **Windows 10 and Windows 11 only**. The application uses the modern Microsoft Defender status and Windows Security interfaces; Windows 7 and Microsoft Security Essentials compatibility paths have been removed. The app targets .NET Framework 4.8.
 
 ## Optional ClamAV manual scanning
 
@@ -28,7 +29,7 @@ The preview can invoke an independently installed `clamscan.exe` for an addition
 
 ## Product requirements still pending
 
-- Independent real-time protection and ransomware behavior monitoring; ClamAV's Windows command-line scan is on-demand only.
+- Independent real-time protection and ransomware behavior monitoring; ClamAV's Windows command-line scan is on-demand only. Controlled Folder Access is a Windows Defender feature, not a Danat-owned ransomware engine.
 - Safe quarantine/restore workflow and auditable event history.
 - Secure engine/signature update strategy beyond the Windows-managed Defender service.
 - 14-day trial and server-validated US$3/year licensing.

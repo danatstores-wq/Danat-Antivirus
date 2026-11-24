@@ -99,6 +99,12 @@
                                            Foreground="#FFC5B995" FontSize="11" TextWrapping="Wrap"/>
                                 <Button x:Name="RefreshStatusButton" Content="REFRESH PROTECTION STATUS" Click="RefreshStatus_Click"
                                         Style="{StaticResource DarkButton}" HorizontalAlignment="Left" Margin="0,12,0,0"/>
+                                <TextBlock Text="RANSOMWARE PROTECTION (CONTROLLED FOLDER ACCESS)"
+                                           Foreground="#FFFFD56A" FontSize="11" FontWeight="Bold" Margin="0,18,0,5"/>
+                                <TextBlock x:Name="CfaStatusText" Text="Checking Windows Controlled Folder Access…"
+                                           Foreground="#FFC5B995" FontSize="11" TextWrapping="Wrap"/>
+                                <Button Content="OPEN RANSOMWARE PROTECTION SETTINGS" Click="OpenRansomwareSettings_Click"
+                                        Style="{StaticResource DarkButton}" HorizontalAlignment="Left" Margin="0,10,0,0"/>
                             </StackPanel>
                         </Border>
 

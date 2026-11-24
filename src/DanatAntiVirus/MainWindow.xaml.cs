@@ -17,7 +17,11 @@ namespace DanatAntiVirus
         public MainWindow()
         {
             InitializeComponent();
-            Loaded += async (s, e) => await RefreshDefenderStatusAsync();
+            Loaded += async (s, e) =>
+            {
+                await RefreshDefenderStatusAsync();
+                await RefreshControlledFolderAccessAsync();
+            };
         }
 
         private void ChooseFolder_Click(object sender, RoutedEventArgs e)
@@ -42,14 +46,6 @@ namespace DanatAntiVirus
         private async Task RefreshDefenderStatusAsync()
         {
             RefreshStatusButton.IsEnabled = false;
-            if (IsWindows7())
-            {
-                DefenderStatusText.Text = "WINDOWS 7 MODE — modern Microsoft Defender status APIs are not available on Windows 7.";
-                DefenderStatusText.Foreground = new SolidColorBrush(Color.FromRgb(255, 198, 92));
-                SignatureAgeText.Text = "Danat will look for Microsoft Security Essentials only as a legacy scan provider. Windows 7 and MSE are out of support; do not rely on them for current protection.";
-                RefreshStatusButton.IsEnabled = true;
-                return;
-            }
             DefenderStatusText.Text = "Checking Microsoft Defender status…";
             try
             {
@@ -171,9 +167,6 @@ namespace DanatAntiVirus
             string programFilesX86 = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
             string[] fallbacks =
             {
-                // Legacy Microsoft Security Essentials locations (Windows 7 only).
-                Path.Combine(programFiles, "Microsoft Security Client", "MpCmdRun.exe"),
-                Path.Combine(programFilesX86, "Microsoft Security Client", "MpCmdRun.exe"),
                 Path.Combine(programFiles, "Windows Defender", "MpCmdRun.exe"),
                 Path.Combine(programFilesX86, "Windows Defender", "MpCmdRun.exe"),
                 Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
@@ -381,14 +374,102 @@ namespace DanatAntiVirus
             }
         }
 
+        private async Task RefreshControlledFolderAccessAsync()
+        {
+            CfaStatusText.Text = "Checking Windows Controlled Folder Access…";
+            try
+            {
+                string result = await Task.Run(GetControlledFolderAccessStatus);
+                string[] fields = result.Split('|');
+                if (fields.Length != 2 || fields[0] != "DANAT_CFA")
+                    throw new InvalidOperationException("Windows returned an unreadable ransomware-protection status.");
+
+                int mode;
+                if (!int.TryParse(fields[1], out mode))
+                    throw new InvalidOperationException("Windows returned an unknown Controlled Folder Access mode.");
+
+                if (mode == 1)
+                {
+                    CfaStatusText.Text = "ON — Windows Controlled Folder Access is enabled. Windows controls which apps may modify protected folders.";
+                    CfaStatusText.Foreground = new SolidColorBrush(Color.FromRgb(112, 210, 133));
+                }
+                else if (mode == 2)
+                {
+                    CfaStatusText.Text = "AUDIT MODE — Windows records blocked-app events but does not actively block changes.";
+                    CfaStatusText.Foreground = new SolidColorBrush(Color.FromRgb(255, 198, 92));
+                }
+                else if (mode == 0)
+                {
+                    CfaStatusText.Text = "OFF — Windows Controlled Folder Access is disabled. Open Windows settings to review this protection.";
+                    CfaStatusText.Foreground = new SolidColorBrush(Color.FromRgb(255, 120, 100));
+                }
+                else
+                {
+                    CfaStatusText.Text = "UNKNOWN MODE (" + mode + ") — review the Windows Security ransomware-protection page.";
+                    CfaStatusText.Foreground = new SolidColorBrush(Color.FromRgb(255, 198, 92));
+                }
+            }
+            catch (Exception ex)
+            {
+                CfaStatusText.Text = "STATUS UNAVAILABLE — " + ex.Message + " Danat has not changed this Windows setting.";
+                CfaStatusText.Foreground = new SolidColorBrush(Color.FromRgb(255, 198, 92));
+            }
+        }
+
+        private static string GetControlledFolderAccessStatus()
+        {
+            const string script = "$ErrorActionPreference='Stop'; Import-Module Defender -ErrorAction Stop; $p=Get-MpPreference -ErrorAction Stop; Write-Output ('DANAT_CFA|' + [string]$p.EnableControlledFolderAccess)";
+            var info = new ProcessStartInfo
+            {
+                FileName = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "WindowsPowerShell", "v1.0", "powershell.exe"),
+                Arguments = "-NoProfile -NonInteractive -ExecutionPolicy Bypass -Command " + QuoteArgument(script),
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
+            };
+
+            using (var process = Process.Start(info))
+            {
+                Task<string> outputTask = process.StandardOutput.ReadToEndAsync();
+                Task<string> errorTask = process.StandardError.ReadToEndAsync();
+                if (!process.WaitForExit(20000))
+                {
+                    process.Kill();
+                    throw new TimeoutException("Controlled Folder Access status check timed out.");
+                }
+                Task.WaitAll(outputTask, errorTask);
+                string output = outputTask.Result.Trim();
+                string error = errorTask.Result.Trim();
+                if (process.ExitCode != 0)
+                    throw new InvalidOperationException(string.IsNullOrWhiteSpace(error) ? "Get-MpPreference failed." : error);
+                return output.Split(new[] { '\\r', '\\n' }, StringSplitOptions.RemoveEmptyEntries).LastOrDefault() ?? string.Empty;
+            }
+        }
+
+        private void OpenRansomwareSettings_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = "ms-settings:windowsdefender-ransomware",
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                SetScanStatus("Could not open Windows ransomware-protection settings: " + ex.Message, true);
+            }
+        }
+
         private void OpenProtectionHistory_Click(object sender, RoutedEventArgs e)
         {
             try
             {
                 Process.Start(new ProcessStartInfo
                 {
-                    FileName = IsWindows7() ? "control.exe" : "ms-settings:windowsdefender-threats",
-                    Arguments = IsWindows7() ? "wscui.cpl" : "",
+                    FileName = "ms-settings:windowsdefender-threats",
                     UseShellExecute = true
                 });
             }
@@ -396,12 +477,6 @@ namespace DanatAntiVirus
             {
                 SetScanStatus("Could not open Windows Security Protection history: " + ex.Message, true);
             }
-        }
-
-        private static bool IsWindows7()
-        {
-            Version v = Environment.OSVersion.Version;
-            return v.Major == 6 && v.Minor == 1;
         }
 
         private static string QuoteArgument(string value)
