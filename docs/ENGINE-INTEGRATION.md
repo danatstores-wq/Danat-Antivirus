@@ -20,7 +20,7 @@ Official references:
 
 ## Safe implementation sequence
 
-- First: add a manually started, user-selected folder scan that invokes a verified, user-installed `clamscan.exe` as a child process. Never download or execute an engine binary silently.
+- First prototype implemented: a manually started, user-selected folder scan invokes a user-installed `clamscan.exe` as a child process. The app checks the executable's version output, requires main and daily databases with recent file timestamps, and passes `--fail-if-cvd-older-than=7` so ClamAV validates database age itself. It also enables alerts for encrypted and scan-limit-exceeded files. Never download or execute an engine binary silently.
 - Require a usable local signature database; report missing, unreadable, or stale definitions as **protection unavailable**, never as a clean result.
 - Interpret scanner exit codes correctly: 0 = no detections reported, 1 = detections reported, 2 = scanner error. A scanner error is not a clean scan.
 - Display detected file paths and signature names. Do not delete or quarantine files automatically in the first iteration.
