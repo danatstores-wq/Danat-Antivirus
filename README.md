@@ -20,7 +20,7 @@ This build integrates with the **Microsoft Defender Antivirus installation alrea
 
 ## Supported platform scope
 
-The Defender integration is intended for supported Windows 10 and Windows 11 installations where Microsoft Defender Antivirus is available. It is **not validated for Windows 7**. Windows 7 is out of support; Windows 10 support ended October 14, 2025 (consumer ESU arrangements may differ). This app cannot make unsupported Windows versions secure.
+The desktop application is built on .NET Framework 4.8 and includes a Windows 7 SP1 compatibility mode. On Windows 7, modern Microsoft Defender PowerShell status APIs and the Windows Security settings URI are not available; the app therefore shows a clear legacy-mode notice and opens the Windows 7 Security Center instead. It can discover the legacy Microsoft Security Essentials command-line scanner if that product is already installed, but it does not install it or claim that it provides current protection. Microsoft Security Essentials and Windows 7 are out of support, so this legacy path is for compatibility/testing only and must not be treated as adequate current security. On Windows 10/11, the modern Microsoft Defender integration remains in use.
 
 ## Product requirements still pending
 
