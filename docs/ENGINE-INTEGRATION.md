@@ -8,11 +8,11 @@ The application:
 1. Calls the Defender PowerShell cmdlet `Get-MpComputerStatus` and displays running mode, service state, antivirus state, real-time protection state, and signature age.
 2. Finds the newest versioned platform directory under `%ProgramData%\Microsoft\Windows Defender\Platform\`, falling back to `%ProgramFiles%\Windows Defender\MpCmdRun.exe`.
 3. Starts a custom scan with `MpCmdRun.exe -Scan -ScanType 3 -File "<path>" -DisableRemediation`.
-4. Captures command output in the application. It does not delete or move files.
+4. Displays the elevated scan console and records the process exit code in Danat. Because Windows `runas` uses shell execution, Danat cannot redirect the elevated process output into its own log. It does not delete or move files.
 
 ## Why remediation is disabled
 
-The default scan is report-only: `-DisableRemediation` prevents this scan request from applying actions. Microsoft documents that detections from this mode are shown in command output rather than the Windows Security UI, and that event-log entries are not written. Danat captures that output.
+The default scan is report-only: `-DisableRemediation` prevents this scan request from applying actions. Microsoft documents that detections from this mode are shown in command output rather than the Windows Security UI, and that event-log entries are not written. The elevated command window remains visible so the user can review that output; Danat records only the exit code. Review the command window before closing it.
 
 The UI also offers an explicit, unchecked consent option. If the user selects it and confirms a warning dialog, Danat omits `-DisableRemediation` and lets Microsoft Defender apply its normal remediation policy. Defender may quarantine or remove detected files. Danat does not implement its own quarantine store or restore mechanism; the Protection History shortcut opens Windows Security so the user can review Defender-managed actions and any available restore controls. This feature must be tested with EICAR in an isolated Windows VM before general distribution.
 
