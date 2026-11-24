@@ -188,7 +188,7 @@ namespace DanatAntiVirus
                 if (exitCode == 0)
                     SetScanStatus("Defender completed the custom scan (exit code 0). Review the scan output above. No scan can guarantee that a device is malware-free.", false);
                 else if (exitCode == 2)
-                    SetScanStatus("Defender returned exit code 2: malware may remain unremediated, or a scan error occurred. Treat this result as unresolved and check the log and Protection history.", true);
+                    SetScanStatus("Defender returned exit code 2: malware may remain unremediated, or a scan error occurred. Treat this result as unresolved and check the captured scan output. This result is unresolved.", true);
                 else
                     SetScanStatus("Defender scan returned unexpected exit code " + exitCode + ". Treat this result as unresolved.", true);
             }
