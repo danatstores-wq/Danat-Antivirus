@@ -168,41 +168,41 @@
                 <!-- Windows maintenance center -->
                 <Border x:Name="MaintenancePanel" Background="#FF17130B" BorderBrush="#FFD1A64A" BorderThickness="1.5" CornerRadius="14" Padding="20" Margin="0,16,0,0">
                     <StackPanel>
-                        <TextBlock Text="WINDOWS TOOLS &amp; OPTIMIZATION" Foreground="#FFFFD56A"
+                        <TextBlock Text="WINDOWS TOOLS &amp; OPTIMIZATION | أدوات ويندوز والتحسين" Foreground="#FFFFD56A"
                                    FontSize="13" FontWeight="Bold"/>
-                        <TextBlock Text="Safe maintenance shortcuts and built-in Windows repair tools"
+                        <TextBlock Text="Windows Maintenance &amp; Repair | صيانة ويندوز وإصلاحه"
                                    FontSize="22" FontWeight="SemiBold" Margin="0,5,0,4"/>
-                        <TextBlock Text="Choose a task. Danat explains system-level actions and requests Windows administrator approval only when needed. Cleanup skips files that Windows is using."
+                        <TextBlock Text="Choose a task | اختر أداة. Danat explains each action and asks for administrator approval when needed. | يشرح دانات كل إجراء ويطلب صلاحية المسؤول عند الحاجة. Files in use are skipped. | يتم تخطي الملفات قيد الاستخدام."
                                    Foreground="#FFC5B995" FontSize="11" TextWrapping="Wrap" Margin="0,0,0,14"/>
                         <UniformGrid Columns="3">
-                            <Button Content="CLEAN USER TEMP FILES" Click="CleanTemp_Click"
+                            <Button Content="CLEAN USER TEMP FILES&#10;تنظيف الملفات المؤقتة" Click="CleanTemp_Click"
                                     Style="{StaticResource GoldButton}" Margin="3"/>
-                            <Button Content="CLEAR THUMBNAIL CACHE" Click="ClearThumbnailCache_Click"
+                            <Button Content="CLEAR THUMBNAIL CACHE&#10;مسح ذاكرة الصور المصغّرة" Click="ClearThumbnailCache_Click"
                                     Style="{StaticResource DarkButton}" Margin="3"/>
-                            <Button Content="FLUSH DNS CACHE" Click="FlushDns_Click"
+                            <Button Content="FLUSH DNS CACHE&#10;مسح ذاكرة DNS" Click="FlushDns_Click"
                                     Style="{StaticResource DarkButton}" Margin="3"/>
-                            <Button Content="CHECK DISK (ONLINE)" Click="CheckDisk_Click"
+                            <Button Content="CHECK DISK (ONLINE)&#10;فحص القرص" Click="CheckDisk_Click"
                                     Style="{StaticResource DarkButton}" Margin="3"/>
-                            <Button Content="REPAIR WINDOWS (DISM)" Click="RepairWindows_Click"
+                            <Button Content="REPAIR WINDOWS (DISM)&#10;إصلاح ويندوز" Click="RepairWindows_Click"
                                     Style="{StaticResource DarkButton}" Margin="3"/>
-                            <Button Content="REPAIR SYSTEM FILES (SFC)" Click="RepairSystemFiles_Click"
+                            <Button Content="REPAIR SYSTEM FILES (SFC)&#10;إصلاح ملفات النظام" Click="RepairSystemFiles_Click"
                                     Style="{StaticResource DarkButton}" Margin="3"/>
-                            <Button Content="STORAGE SETTINGS" Click="OpenStorageSettings_Click"
+                            <Button Content="STORAGE SETTINGS&#10;إعدادات التخزين" Click="OpenStorageSettings_Click"
                                     Style="{StaticResource DarkButton}" Margin="3"/>
-                            <Button Content="STARTUP APPS" Click="OpenStartupSettings_Click"
+                            <Button Content="STARTUP APPS&#10;تطبيقات بدء التشغيل" Click="OpenStartupSettings_Click"
                                     Style="{StaticResource DarkButton}" Margin="3"/>
-                            <Button Content="NETWORK SETTINGS" Click="OpenNetworkSettings_Click"
+                            <Button Content="NETWORK SETTINGS&#10;إعدادات الشبكة" Click="OpenNetworkSettings_Click"
                                     Style="{StaticResource DarkButton}" Margin="3"/>
-                            <Button Content="DRIVE OPTIMIZATION" Click="OpenDriveOptimization_Click"
+                            <Button Content="DRIVE OPTIMIZATION&#10;تحسين محركات الأقراص" Click="OpenDriveOptimization_Click"
                                     Style="{StaticResource DarkButton}" Margin="3"/>
                         </UniformGrid>
-                        <TextBlock x:Name="MaintenanceStatusText" Text="Ready. No maintenance task is running."
+                        <TextBlock x:Name="MaintenanceStatusText" Text="Ready. No maintenance task is running. | جاهز. لا توجد عملية صيانة قيد التشغيل."
                                    Foreground="#FFFFC65C" FontSize="11" FontWeight="Bold"
                                    TextWrapping="Wrap" Margin="3,12,3,6"/>
                         <TextBox x:Name="MaintenanceLogBox" Height="90" IsReadOnly="True" AcceptsReturn="True"
                                  VerticalScrollBarVisibility="Auto" TextWrapping="Wrap" Background="#FF0B0B0B"
                                  Foreground="#FFE8DDBB" BorderBrush="#FF37302A" Padding="8"/>
-                        <TextBlock Text="Registry cleaning is intentionally excluded. Deleting registry entries automatically can damage Windows and installed applications. Danat will not make silent registry changes."
+                        <TextBlock Text="Registry cleaning is intentionally excluded because automatic deletion can damage Windows and apps. | تم استبعاد تنظيف سجل النظام؛ لأن الحذف التلقائي قد يضر ويندوز والتطبيقات. Danat will never change the registry silently. | لن يغيّر دانات سجل النظام دون علمك."
                                    Foreground="#FFE6B96A" FontSize="10" TextWrapping="Wrap" Margin="3,10,3,0"/>
                     </StackPanel>
                 </Border>
