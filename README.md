@@ -40,7 +40,7 @@ The preview can set up ClamAV from inside Danat using the `Cisco.ClamAV` package
 
 Open `DanatAntiVirus.sln` in Visual Studio 2022 with the .NET Framework 4.8 Developer Pack and WPF workload installed. Build the `Release` configuration.
 
-The app requests administrator privileges at startup so it can invoke Microsoft's documented elevated scan utility and read local Defender status. Windows displays a UAC prompt.
+The app requests administrator privileges at startup so it can invoke Microsoft's documented elevated scan utility and read local Defender status. Windows displays a UAC prompt. **Before public release, ClamAV scanning must be moved into a separate unelevated helper process:** today, child processes inherit the app's elevated token, which unnecessarily gives the ClamAV file parser administrator-level access to scanned files. Do not treat the current ClamAV integration as production-hardened until this privilege separation is implemented and tested.
 
 ## Safety
 
