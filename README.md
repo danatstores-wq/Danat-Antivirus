@@ -9,7 +9,7 @@ This build integrates with the **Microsoft Defender Antivirus installation alrea
 - Reads Defender service, antivirus, real-time protection, operating mode, and security-intelligence age using Microsoft's `Get-MpComputerStatus` PowerShell cmdlet.
 - Locates the newest installed `MpCmdRun.exe` platform version.
 - Starts a real Microsoft Defender custom scan for a selected file or folder.
-- Uses `-DisableRemediation` so this scan request does not automatically change detected files. Review scan output and Windows Security Protection history.
+- Uses `-DisableRemediation` so this scan request does not automatically change detected files. Review the captured scan output in Danat; Microsoft documents that non-remediating custom-scan detections are not added to the Windows Security UI or event log.
 - Treats Defender exit code 2 as unresolved (malware may remain unremediated or a scan error occurred), never as a clean result.
 - Requests administrator privileges because Microsoft's command-line tool requires an elevated command prompt.
 
