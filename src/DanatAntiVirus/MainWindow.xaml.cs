@@ -308,6 +308,13 @@ namespace DanatAntiVirus
 
         private static string FindWinget()
         {
+            // App Installer exposes WinGet through this per-user execution-alias path.
+            // Check it directly because WindowsApps is not always present in a process PATH.
+            string windowsApps = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "Microsoft", "WindowsApps", "winget.exe");
+            if (File.Exists(windowsApps)) return windowsApps;
+
             var info = new ProcessStartInfo
             {
                 FileName = "where.exe",
@@ -319,8 +326,14 @@ namespace DanatAntiVirus
             };
             using (var process = Process.Start(info))
             {
-                string output = process.StandardOutput.ReadToEnd();
-                process.WaitForExit(5000);
+                if (process == null) return null;
+                Task<string> outputTask = process.StandardOutput.ReadToEndAsync();
+                if (!process.WaitForExit(5000))
+                {
+                    try { process.Kill(); } catch { }
+                    return null;
+                }
+                string output = outputTask.GetAwaiter().GetResult();
                 return output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
                     .Select(path => path.Trim())
                     .FirstOrDefault(File.Exists);
@@ -627,7 +640,14 @@ namespace DanatAntiVirus
                 if (!process.Start()) throw new InvalidOperationException("Windows could not start ClamAV.");
                 process.BeginOutputReadLine();
                 process.BeginErrorReadLine();
-                await Task.Run(() => process.WaitForExit());
+                // Bound the scan duration so an unresponsive scanner cannot leave Danat
+                // appearing busy forever. A timeout is reported as an incomplete scan.
+                bool exited = await Task.Run(() => process.WaitForExit(4 * 60 * 60 * 1000));
+                if (!exited)
+                {
+                    try { process.Kill(); } catch { }
+                    throw new TimeoutException("ClamAV scan exceeded four hours and was stopped. Treat the scan as incomplete.");
+                }
                 process.WaitForExit();
                 return process.ExitCode;
             }
