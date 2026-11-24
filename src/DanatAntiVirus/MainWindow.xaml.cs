@@ -405,9 +405,9 @@ namespace DanatAntiVirus
             if (_scanRunning) return;
             string scanner = FindClamScan();
             bool alreadyInstalled = scanner != null;
-            string action = alreadyInstalled ? "check for and install an available ClamAV engine update" : "download and install the official ClamAV scanning engine";
+            string action = alreadyInstalled ? "check for and install an available ClamAV engine update" : "download and install ClamAV from the Cisco-Talos official release";
             MessageBoxResult consent = MessageBox.Show(
-                "Danat Anti-Virus will use Windows Package Manager to " + action + ". Windows may display an installation or license confirmation. The installer is obtained from the Cisco.ClamAV WinGet package, whose installer hash is checked by WinGet. ClamAV is licensed under GPL-2.0. Continue?",
+                "Danat Anti-Virus will use Windows Package Manager to " + action + ". Windows may display an installation or license confirmation. The community-maintained Cisco.ClamAV WinGet manifest points to the official Cisco-Talos ClamAV GitHub release and provides the SHA-256 hash checked by WinGet. The manifest is not maintained by Cisco and does not imply Cisco endorsement of Danat. ClamAV is separate GPL-2.0 software; Danat does not bundle, modify, or link to it. Continue?",
                 "Danat ClamAV setup",
                 MessageBoxButton.YesNo,
                 MessageBoxImage.Information);
