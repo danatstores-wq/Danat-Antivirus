@@ -42,6 +42,14 @@ namespace DanatAntiVirus
         private async Task RefreshDefenderStatusAsync()
         {
             RefreshStatusButton.IsEnabled = false;
+            if (IsWindows7())
+            {
+                DefenderStatusText.Text = "WINDOWS 7 MODE — modern Microsoft Defender status APIs are not available on Windows 7.";
+                DefenderStatusText.Foreground = new SolidColorBrush(Color.FromRgb(255, 198, 92));
+                SignatureAgeText.Text = "Danat will look for Microsoft Security Essentials only as a legacy scan provider. Windows 7 and MSE are out of support; do not rely on them for current protection.";
+                RefreshStatusButton.IsEnabled = true;
+                return;
+            }
             DefenderStatusText.Text = "Checking Microsoft Defender status…";
             try
             {
@@ -163,6 +171,9 @@ namespace DanatAntiVirus
             string programFilesX86 = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
             string[] fallbacks =
             {
+                // Legacy Microsoft Security Essentials locations (Windows 7 only).
+                Path.Combine(programFiles, "Microsoft Security Client", "MpCmdRun.exe"),
+                Path.Combine(programFilesX86, "Microsoft Security Client", "MpCmdRun.exe"),
                 Path.Combine(programFiles, "Windows Defender", "MpCmdRun.exe"),
                 Path.Combine(programFilesX86, "Windows Defender", "MpCmdRun.exe"),
                 Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
@@ -280,7 +291,8 @@ namespace DanatAntiVirus
             {
                 Process.Start(new ProcessStartInfo
                 {
-                    FileName = "ms-settings:windowsdefender-threats",
+                    FileName = IsWindows7() ? "control.exe" : "ms-settings:windowsdefender-threats",
+                    Arguments = IsWindows7() ? "wscui.cpl" : "",
                     UseShellExecute = true
                 });
             }
@@ -288,6 +300,12 @@ namespace DanatAntiVirus
             {
                 SetScanStatus("Could not open Windows Security Protection history: " + ex.Message, true);
             }
+        }
+
+        private static bool IsWindows7()
+        {
+            Version v = Environment.OSVersion.Version;
+            return v.Major == 6 && v.Minor == 1;
         }
 
         private static string QuoteArgument(string value)
