@@ -453,7 +453,7 @@ namespace DanatAntiVirus
                 string error = errorTask.Result.Trim();
                 if (process.ExitCode != 0)
                     throw new InvalidOperationException(string.IsNullOrWhiteSpace(error) ? "Get-MpPreference failed." : error);
-                return output.Split(new[] { '\\r', '\\n' }, StringSplitOptions.RemoveEmptyEntries).LastOrDefault() ?? string.Empty;
+                return output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).LastOrDefault() ?? string.Empty;
             }
         }
 
