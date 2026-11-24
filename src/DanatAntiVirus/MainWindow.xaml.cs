@@ -15,6 +15,7 @@ namespace DanatAntiVirus
     {
         private string _scanTarget;
         private bool _scanRunning;
+        private bool _maintenanceRunning;
 
         public MainWindow()
         {
@@ -188,7 +189,7 @@ namespace DanatAntiVirus
 
         private async void StartScan_Click(object sender, RoutedEventArgs e)
         {
-            if (_scanRunning) return;
+            if (_scanRunning || _maintenanceRunning) return;
             if (string.IsNullOrWhiteSpace(_scanTarget) || !Directory.Exists(_scanTarget) && !File.Exists(_scanTarget))
             {
                 SetScanStatus("Choose an existing file or folder first.", true);
@@ -829,11 +830,11 @@ namespace DanatAntiVirus
         {
             string temp = Path.GetFullPath(Path.GetTempPath());
             string local = Path.GetFullPath(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData));
-            if (string.IsNullOrWhiteSpace(temp) || !temp.StartsWith(local, StringComparison.OrdinalIgnoreCase))
+            if (string.IsNullOrWhiteSpace(temp) || !temp.StartsWith(local.TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
                 throw new InvalidOperationException("The resolved TEMP path is not inside this user's Local AppData folder.");
             DateTime cutoff = DateTime.Now.AddDays(-7);
             int deleted = 0, skipped = 0;
-            foreach (string file in Directory.GetFiles(temp, "*", SearchOption.AllDirectories))
+            foreach (string file in Directory.GetFiles(temp, "*", SearchOption.TopDirectoryOnly))
             {
                 try
                 {
@@ -845,8 +846,7 @@ namespace DanatAntiVirus
                 catch { skipped++; }
             }
             // Remove only empty directories under TEMP; never recursively delete a directory tree.
-            foreach (string directory in Directory.GetDirectories(temp, "*", SearchOption.AllDirectories)
-                .OrderByDescending(p => p.Length))
+            foreach (string directory in Directory.GetDirectories(temp, "*", SearchOption.TopDirectoryOnly))
             {
                 try { if (!Directory.EnumerateFileSystemEntries(directory).Any()) Directory.Delete(directory, false); }
                 catch { }
@@ -969,6 +969,7 @@ namespace DanatAntiVirus
 
         private void SetMaintenanceBusy(bool busy, string message)
         {
+            _maintenanceRunning = busy;
             SetMaintenanceButtonsEnabled(MaintenancePanel, !busy);
             if (busy && !string.IsNullOrWhiteSpace(message)) MaintenanceStatusText.Text = message;
         }
