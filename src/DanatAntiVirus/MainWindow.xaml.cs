@@ -109,13 +109,16 @@ namespace DanatAntiVirus
 
             using (var process = Process.Start(info))
             {
+                Task<string> outputTask = process.StandardOutput.ReadToEndAsync();
+                Task<string> errorTask = process.StandardError.ReadToEndAsync();
                 if (!process.WaitForExit(20000))
                 {
                     process.Kill();
                     throw new TimeoutException("Defender status check timed out.");
                 }
-                string output = process.StandardOutput.ReadToEnd().Trim();
-                string error = process.StandardError.ReadToEnd().Trim();
+                Task.WaitAll(outputTask, errorTask);
+                string output = outputTask.Result.Trim();
+                string error = errorTask.Result.Trim();
                 if (process.ExitCode != 0)
                     throw new InvalidOperationException(string.IsNullOrWhiteSpace(error) ? "Get-MpComputerStatus failed." : error);
                 return output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).LastOrDefault() ?? string.Empty;
@@ -176,6 +179,17 @@ namespace DanatAntiVirus
                 return;
             }
 
+            bool allowRemediation = AllowRemediationCheckBox.IsChecked == true;
+            if (allowRemediation)
+            {
+                MessageBoxResult consent = MessageBox.Show(
+                    "You are authorizing Microsoft Defender to take its normal action on threats found in this scan. Defender may quarantine or remove detected files. Continue?",
+                    "Authorize Defender remediation",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Warning);
+                if (consent != MessageBoxResult.Yes) return;
+            }
+
             _scanRunning = true;
             StartScanButton.IsEnabled = false;
             ChooseFolderButton.IsEnabled = false;
@@ -184,11 +198,13 @@ namespace DanatAntiVirus
 
             try
             {
-                int exitCode = await RunDefenderScanAsync(scanner, _scanTarget);
+                int exitCode = await RunDefenderScanAsync(scanner, _scanTarget, allowRemediation);
                 if (exitCode == 0)
-                    SetScanStatus("Defender completed the custom scan (exit code 0). Review the scan output above. No scan can guarantee that a device is malware-free.", false);
+                    SetScanStatus(allowRemediation
+                        ? "Defender completed the scan (exit code 0). Defender reports no unresolved threat; review Windows Security Protection history for any actions taken."
+                        : "Defender completed the report-only scan (exit code 0). Review the scan output above; detected files were not remediated by this scan request.", false);
                 else if (exitCode == 2)
-                    SetScanStatus("Defender returned exit code 2: malware may remain unremediated, or a scan error occurred. Treat this result as unresolved and check the captured scan output. This result is unresolved.", true);
+                    SetScanStatus("Defender returned exit code 2. A threat may remain unremediated, user action may be required, or a scan error occurred. Treat this result as unresolved; inspect scan output and Protection history.", true);
                 else
                     SetScanStatus("Defender scan returned unexpected exit code " + exitCode + ". Treat this result as unresolved.", true);
             }
@@ -205,12 +221,12 @@ namespace DanatAntiVirus
             }
         }
 
-        private async Task<int> RunDefenderScanAsync(string scanner, string target)
+        private async Task<int> RunDefenderScanAsync(string scanner, string target, bool allowRemediation)
         {
             var info = new ProcessStartInfo
             {
                 FileName = scanner,
-                Arguments = "-Scan -ScanType 3 -File " + QuoteArgument(target) + " -DisableRemediation",
+                Arguments = "-Scan -ScanType 3 -File " + QuoteArgument(target) + (allowRemediation ? string.Empty : " -DisableRemediation"),
                 WorkingDirectory = Path.GetDirectoryName(scanner),
                 UseShellExecute = false,
                 CreateNoWindow = true,
@@ -239,6 +255,22 @@ namespace DanatAntiVirus
                 await Task.Run(() => process.WaitForExit());
                 process.WaitForExit();
                 return process.ExitCode;
+            }
+        }
+
+        private void OpenProtectionHistory_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = "ms-settings:windowsdefender-threats",
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                SetScanStatus("Could not open Windows Security Protection history: " + ex.Message, true);
             }
         }
 
