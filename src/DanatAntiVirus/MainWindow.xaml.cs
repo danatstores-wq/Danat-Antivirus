@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -289,6 +290,23 @@ namespace DanatAntiVirus
                 "DanatAntiVirus", "ClamAV", "Database");
         }
 
+
+        private static bool ClamDatabaseNeedsUpdate()
+        {
+            string database = GetClamDatabaseDirectory();
+            bool hasDatabase = Directory.Exists(database) &&
+                (Directory.GetFiles(database, "*.cvd").Length > 0 || Directory.GetFiles(database, "*.cld").Length > 0);
+            if (!hasDatabase) return true;
+
+            string marker = Path.Combine(database, ".last-successful-update");
+            if (!File.Exists(marker)) return true;
+            DateTime lastUpdate;
+            if (!DateTime.TryParse(File.ReadAllText(marker), CultureInfo.InvariantCulture,
+                DateTimeStyles.RoundtripKind, out lastUpdate))
+                return true;
+            return DateTime.UtcNow - lastUpdate.ToUniversalTime() >= TimeSpan.FromHours(4);
+        }
+
         private static string EnsureClamFreshclamConfig(string scanner)
         {
             string root = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
@@ -349,6 +367,11 @@ namespace DanatAntiVirus
                     throw new TimeoutException("ClamAV signature update exceeded 10 minutes.");
                 }
                 process.WaitForExit();
+                if (process.ExitCode == 0)
+                {
+                    string marker = Path.Combine(GetClamDatabaseDirectory(), ".last-successful-update");
+                    File.WriteAllText(marker, DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture));
+                }
                 return process.ExitCode;
             }
         }
@@ -487,11 +510,18 @@ namespace DanatAntiVirus
             try
             {
                 string config = EnsureClamFreshclamConfig(scanner);
-                int updateCode = await RunFreshClamAsync(freshclam, config);
-                if (updateCode != 0)
+                if (ClamDatabaseNeedsUpdate())
                 {
-                    SetScanStatus("ClamAV signature update failed (exit code " + updateCode + "). Scan cancelled because current signatures could not be confirmed.", true);
-                    return;
+                    int updateCode = await RunFreshClamAsync(freshclam, config);
+                    if (updateCode != 0)
+                    {
+                        SetScanStatus("ClamAV signature update failed (exit code " + updateCode + "). Scan cancelled because current signatures could not be confirmed.", true);
+                        return;
+                    }
+                }
+                else
+                {
+                    AppendLog("ClamAV signatures were successfully checked within the last four hours; no repeat download was needed.");
                 }
                 SetScanStatus("Signatures are current. Starting ClamAV on-demand scan. This is not real-time protection.", false);
                 int code = await RunClamScanAsync(scanner, _scanTarget, GetClamDatabaseDirectory());
