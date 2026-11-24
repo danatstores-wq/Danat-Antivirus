@@ -166,8 +166,7 @@
 
 
                 <!-- Windows maintenance center -->
-                <Border Background="#FF17130B" BorderBrush="#FFD1A64A" BorderThickness="1.5" CornerRadius="14"
-                        Padding="20" Margin="0,16,0,0">
+                <Border x:Name="MaintenancePanel" Background="#FF17130B" BorderBrush="#FFD1A64A" BorderThickness="1.5" CornerRadius="14" Padding="20" Margin="0,16,0,0">
                     <StackPanel>
                         <TextBlock Text="WINDOWS TOOLS &amp; OPTIMIZATION" Foreground="#FFFFD56A"
                                    FontSize="13" FontWeight="Bold"/>
