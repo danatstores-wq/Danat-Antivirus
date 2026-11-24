@@ -854,6 +854,35 @@ namespace DanatAntiVirus
             return Tuple.Create(deleted, skipped);
         }
 
+        private async void ClearThumbnailCache_Click(object sender, RoutedEventArgs e)
+        {
+            if (_scanRunning || _maintenanceRunning) return;
+            if (MessageBox.Show("This removes Windows thumbnail-cache database files for the current user only. Windows will rebuild thumbnails as needed. Files currently in use will be skipped. Continue?",
+                "Clear thumbnail cache", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
+            SetMaintenanceBusy(true, "Clearing the current user's Windows thumbnail cache…");
+            try
+            {
+                var result = await Task.Run(() =>
+                {
+                    string folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                        "Microsoft", "Windows", "Explorer");
+                    if (!Directory.Exists(folder)) return Tuple.Create(0, 0);
+                    int deleted = 0, skipped = 0;
+                    foreach (string file in Directory.GetFiles(folder, "thumbcache_*.db", SearchOption.TopDirectoryOnly))
+                    {
+                        try { File.SetAttributes(file, FileAttributes.Normal); File.Delete(file); deleted++; }
+                        catch { skipped++; }
+                    }
+                    return Tuple.Create(deleted, skipped);
+                });
+                MaintenanceStatusText.Text = "Thumbnail cache cleanup finished. Deleted " + result.Item1 +
+                    " file(s); skipped " + result.Item2 + " file(s). Windows will rebuild thumbnails.";
+                AppendMaintenanceLog("Thumbnail cache: " + result.Item1 + " deleted; " + result.Item2 + " skipped.");
+            }
+            catch (Exception ex) { MaintenanceStatusText.Text = "Thumbnail cache could not be cleared: " + ex.Message; }
+            finally { SetMaintenanceBusy(false, null); }
+        }
+
         private async void FlushDns_Click(object sender, RoutedEventArgs e)
         {
             if (_scanRunning) return;
@@ -873,7 +902,7 @@ namespace DanatAntiVirus
         private async void CheckDisk_Click(object sender, RoutedEventArgs e)
         {
             if (_scanRunning) return;
-            if (MessageBox.Show("This runs the Windows online NTFS scan (chkdsk C: /scan). It checks the system drive without scheduling an offline repair. Continue?",
+            if (MessageBox.Show("This runs the Windows online NTFS scan (chkdsk on the Windows system drive with /scan). It checks the system drive without scheduling an offline repair. Continue?",
                 "Check system drive", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
             SetMaintenanceBusy(true, "Starting the Windows online disk scan…");
             try
