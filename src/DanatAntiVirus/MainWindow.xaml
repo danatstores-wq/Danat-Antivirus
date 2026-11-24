@@ -132,7 +132,7 @@
                             </DockPanel>
                             <CheckBox x:Name="AllowRemediationCheckBox"
                                       Content="I authorize Microsoft Defender to quarantine or remediate threats found in this scan"
-                                      IsChecked="False" Foreground="#FFFFC65C" FontSize="11" TextWrapping="Wrap"
+                                      IsChecked="False" Foreground="#FFFFC65C" FontSize="11"
                                       Margin="0,6,0,14"/>
                             <StackPanel Orientation="Horizontal">
                                 <Button x:Name="StartScanButton" Content="START SCAN" Click="StartScan_Click" Style="{StaticResource GoldButton}"/>
