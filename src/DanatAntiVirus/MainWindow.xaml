@@ -47,10 +47,8 @@
                 <StackPanel DockPanel.Dock="Top">
                     <Border Width="66" Height="66" CornerRadius="33" BorderBrush="#FFE2B84F" BorderThickness="2"
                             Background="#FF1B170E" HorizontalAlignment="Left" Margin="0,0,0,12">
-                        <Grid>
-                            <TextBlock Text="D" FontSize="46" FontWeight="Bold" Foreground="#FFFFD76A"
-                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Grid>
+                        <Image Source="/DanatAntiVirus;component/worrier.png" Stretch="Uniform"
+                               HorizontalAlignment="Center" VerticalAlignment="Center" Margin="5"/>
                     </Border>
                     <TextBlock Text="DANAT" FontSize="20" FontWeight="Bold" Foreground="#FFFFD56A"/>
                     <TextBlock Text="ANTI-VIRUS" FontSize="10" Foreground="#FFC6B27C" Margin="0,0,0,28"/>
@@ -101,10 +99,8 @@
                             <Ellipse Stroke="#FF6D5423" StrokeThickness="2" Margin="5"/>
                             <Ellipse Stroke="#FFD6A62E" StrokeThickness="1" Margin="15"/>
                             <Ellipse Fill="#FF0B0B0B" Stroke="#FFE0B74F" StrokeThickness="3" Margin="28"/>
-                            <TextBlock Text="D" FontSize="91" FontWeight="Bold" Foreground="#FFFFD56A"
-                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            <TextBlock Text="◈" FontSize="27" Foreground="#FFFFE8A3"
-                                       HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,-2,0,0"/>
+                            <Image Source="/DanatAntiVirus;component/worrier.png" Stretch="Uniform"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" Margin="12"/>
                         </Grid>
                     </Grid>
                 </Border>
@@ -162,12 +158,8 @@
                                          HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 <Border Width="145" Height="166" Background="#FF241B0A" BorderBrush="#FFE1B44A"
                                         BorderThickness="3" CornerRadius="20" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                    <Grid>
-                                        <TextBlock Text="D" FontSize="104" FontWeight="Bold" Foreground="#FFFFD56A"
-                                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                        <TextBlock Text="DANAT" FontSize="12" FontWeight="Bold" Foreground="#FFFFE8A3"
-                                                   HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,13"/>
-                                    </Grid>
+                                    <Image Source="/DanatAntiVirus;component/worrier.png" Stretch="Uniform"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center" Margin="5"/>
                                 </Border>
                             </Grid>
                             <StackPanel Grid.Row="1" Margin="0,10,0,0">
