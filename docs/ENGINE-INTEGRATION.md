@@ -12,7 +12,9 @@ The application:
 
 ## Why remediation is disabled
 
-The first integration is deliberately scan/report only. Microsoft's documentation states that `-DisableRemediation` is valid for custom scans and prevents actions from being applied after detection. It also notes that detections from such a custom scan are shown in command output rather than the Windows Security UI, and that event-log entries are not written. The user should review Danat's captured scan output. Quarantine/restore will not be implemented until a safe, auditable workflow is designed.
+The default scan is report-only: `-DisableRemediation` prevents this scan request from applying actions. Microsoft documents that detections from this mode are shown in command output rather than the Windows Security UI, and that event-log entries are not written. Danat captures that output.
+
+The UI also offers an explicit, unchecked consent option. If the user selects it and confirms a warning dialog, Danat omits `-DisableRemediation` and lets Microsoft Defender apply its normal remediation policy. Defender may quarantine or remove detected files. Danat does not implement its own quarantine store or restore mechanism; the Protection History shortcut opens Windows Security so the user can review Defender-managed actions and any available restore controls. This feature must be tested with EICAR in an isolated Windows VM before general distribution.
 
 ## Privileges
 
