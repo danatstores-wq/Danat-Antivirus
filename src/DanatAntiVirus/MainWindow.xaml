@@ -46,15 +46,15 @@
                Source="/DanatAntiVirus;component/background.jpg"
                Stretch="UniformToFill"
                IsHitTestVisible="False"
-               Panel.ZIndex="-2"/>
+               Panel.ZIndex="0"/>
         <!-- Dark tint keeps the gold text and controls readable over the artwork. -->
         <Border Grid.ColumnSpan="2"
-                Background="#88070604"
+                Background="#55070604"
                 IsHitTestVisible="False"
-                Panel.ZIndex="-1"/>
+                Panel.ZIndex="1"/>
 
         <!-- Left navigation rail -->
-        <Border Grid.Column="0" Background="#FF111111" BorderBrush="#FF3A2D16" BorderThickness="0,0,1,0" Padding="16,20">
+        <Border Grid.Column="0" Panel.ZIndex="2" Background="#EE111111" BorderBrush="#FF3A2D16" BorderThickness="0,0,1,0" Padding="16,20">
             <DockPanel LastChildFill="True">
                 <StackPanel DockPanel.Dock="Top">
                     <Border Width="66" Height="66" CornerRadius="33" BorderBrush="#FFE2B84F" BorderThickness="2"
@@ -78,7 +78,7 @@
         </Border>
 
         <!-- Main dashboard -->
-        <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <ScrollViewer Grid.Column="1" Panel.ZIndex="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
             <StackPanel Margin="28,22,32,26">
                 <DockPanel LastChildFill="True" Margin="0,0,0,15">
                     <Border DockPanel.Dock="Right" Background="#FF332814" BorderBrush="#FF9D7B32" BorderThickness="1"
@@ -98,7 +98,7 @@
 
                     <StackPanel Grid.Column="0" Margin="0,0,14,0">
                         <!-- Protection status box -->
-                        <Border Background="#CC17130B" BorderBrush="#FFD1A64A" BorderThickness="1.5" CornerRadius="14"
+                        <Border Background="#B817130B" BorderBrush="#FFD1A64A" BorderThickness="1.5" CornerRadius="14"
                                 Padding="22" Margin="0,0,0,18">
                             <StackPanel VerticalAlignment="Center">
                                 <TextBlock Text="DANAT ANTI-VIRUS" Foreground="#FFFFD56A" FontSize="13" FontWeight="Bold"/>
@@ -121,7 +121,7 @@
                         </Border>
 
                         <!-- Actual Defender scan controls -->
-                        <Border Background="#CC151515" BorderBrush="#FF72551C" BorderThickness="1"
+                        <Border Background="#B8151515" BorderBrush="#FF72551C" BorderThickness="1"
                                 CornerRadius="12" Padding="18">
                             <StackPanel>
                                 <TextBlock Text="MICROSOFT DEFENDER SCAN" Foreground="#FFFFD56A" FontSize="12" FontWeight="Bold"/>
@@ -157,7 +157,7 @@
                     </StackPanel>
 
                     <!-- Full-height warrior artwork column, aligned with both left-side panels -->
-                    <Border Grid.Column="1" Background="#CC11100C" BorderBrush="#FFB88A32" BorderThickness="1.5"
+                    <Border Grid.Column="1" Background="#AA11100C" BorderBrush="#FFB88A32" BorderThickness="1.5"
                             CornerRadius="14" Padding="12" ClipToBounds="True">
                         <Grid>
                             <Ellipse Width="340" Height="340" Stroke="#FF5E471B" StrokeThickness="1.5"
