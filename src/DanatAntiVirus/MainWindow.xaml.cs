@@ -47,6 +47,13 @@ namespace DanatAntiVirus
             {
                 string result = await Task.Run(GetDefenderStatus);
                 string[] fields = result.Split('|');
+                if (fields.Length >= 2 && fields[0] == "DANAT_UNAVAILABLE")
+                {
+                    DefenderStatusText.Text = "DEFENDER STATUS UNAVAILABLE — " + fields[1];
+                    DefenderStatusText.Foreground = new SolidColorBrush(Color.FromRgb(255, 198, 92));
+                    SignatureAgeText.Text = "Danat will not claim that real-time protection is active until Windows Defender can be verified.";
+                    return;
+                }
                 if (fields.Length != 6 || fields[0] != "DANAT")
                     throw new InvalidOperationException("Windows did not return a valid Defender status.");
 
@@ -96,7 +103,7 @@ namespace DanatAntiVirus
 
         private static string GetDefenderStatus()
         {
-            const string script = "$ErrorActionPreference='Stop'; $s=Get-MpComputerStatus; Write-Output ('DANAT|' + [string]$s.AMRunningMode + '|' + [string]$s.AMServiceEnabled + '|' + [string]$s.AntivirusEnabled + '|' + [string]$s.RealTimeProtectionEnabled + '|' + [string]$s.AntivirusSignatureAge)";
+            const string script = "$ErrorActionPreference='Stop'; try { Import-Module Defender -ErrorAction Stop; $s=Get-MpComputerStatus -ErrorAction Stop; Write-Output ('DANAT|' + [string]$s.AMRunningMode + '|' + [string]$s.AMServiceEnabled + '|' + [string]$s.AntivirusEnabled + '|' + [string]$s.RealTimeProtectionEnabled + '|' + [string]$s.AntivirusSignatureAge) } catch { $m=$_.Exception.Message -replace '[\\r\\n|]+',' '; Write-Output ('DANAT_UNAVAILABLE|' + $m); exit 0 }";
             var info = new ProcessStartInfo
             {
                 FileName = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "WindowsPowerShell", "v1.0", "powershell.exe"),
@@ -153,8 +160,17 @@ namespace DanatAntiVirus
             }
 
             string programFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
-            string fallback = Path.Combine(programFiles, "Windows Defender", "MpCmdRun.exe");
-            return File.Exists(fallback) ? fallback : null;
+            string programFilesX86 = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
+            string[] fallbacks =
+            {
+                Path.Combine(programFiles, "Windows Defender", "MpCmdRun.exe"),
+                Path.Combine(programFilesX86, "Windows Defender", "MpCmdRun.exe"),
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
+                    "Microsoft", "Windows Defender", "Platform", "MpCmdRun.exe")
+            };
+            foreach (string fallback in fallbacks)
+                if (File.Exists(fallback)) return fallback;
+            return null;
         }
 
         private static Version ParseVersion(string value)
@@ -175,7 +191,7 @@ namespace DanatAntiVirus
             string scanner = FindMpCmdRun();
             if (scanner == null)
             {
-                SetScanStatus("Microsoft Defender's MpCmdRun.exe was not found. This feature requires Microsoft Defender Antivirus to be installed.", true);
+                SetScanStatus("Microsoft Defender's scan engine (MpCmdRun.exe) was not found. This PC may not have Microsoft Defender Antivirus installed or enabled. Danat cannot scan files without the genuine Microsoft Defender engine.", true);
                 return;
             }
 
