@@ -12,7 +12,7 @@ The application:
 
 ## Why remediation is disabled
 
-The first integration is deliberately scan/report only. Microsoft's documentation states that `-DisableRemediation` is valid for custom scans and prevents actions from being applied after detection. It also notes that detections from such a custom scan are shown in command output rather than the Windows Security UI. The user should review Danat's scan output and Windows Security Protection history. Quarantine/restore will not be implemented until a safe, auditable workflow is designed.
+The first integration is deliberately scan/report only. Microsoft's documentation states that `-DisableRemediation` is valid for custom scans and prevents actions from being applied after detection. It also notes that detections from such a custom scan are shown in command output rather than the Windows Security UI, and that event-log entries are not written. The user should review Danat's captured scan output. Quarantine/restore will not be implemented until a safe, auditable workflow is designed.
 
 ## Privileges
 
