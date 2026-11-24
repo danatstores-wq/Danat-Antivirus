@@ -3,9 +3,9 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Media;
 using Microsoft.Win32;
 
 namespace DanatAntiVirus
@@ -13,46 +13,19 @@ namespace DanatAntiVirus
     public partial class MainWindow : Window
     {
         private string _scanTarget;
-        private CancellationTokenSource _scanCancellation;
+        private bool _scanRunning;
 
-        public MainWindow() { InitializeComponent(); }
-
-        private void BrowseScanner_Click(object sender, RoutedEventArgs e)
+        public MainWindow()
         {
-            var dialog = new OpenFileDialog
-            {
-                Title = "Select the installed ClamAV scanner",
-                Filter = "ClamAV scanner (clamscan.exe)|clamscan.exe|Executable files (*.exe)|*.exe",
-                CheckFileExists = true
-            };
-            if (dialog.ShowDialog() == true)
-            {
-                if (!string.Equals(Path.GetFileName(dialog.FileName), "clamscan.exe", StringComparison.OrdinalIgnoreCase))
-                {
-                    SetStatus("Please select the official clamscan.exe executable.", true);
-                    return;
-                }
-                ScannerPathBox.Text = dialog.FileName;
-                SetStatus("Scanner selected. Select its signature database folder and a folder to scan.", false);
-            }
-        }
-
-        private void BrowseDatabase_Click(object sender, RoutedEventArgs e)
-        {
-            using (var dialog = new System.Windows.Forms.FolderBrowserDialog())
-            {
-                dialog.Description = "Select the folder containing ClamAV main and daily signature databases";
-                dialog.ShowNewFolderButton = false;
-                if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-                    DatabasePathBox.Text = dialog.SelectedPath;
-            }
+            InitializeComponent();
+            Loaded += async (s, e) => await RefreshDefenderStatusAsync();
         }
 
         private void ChooseFolder_Click(object sender, RoutedEventArgs e)
         {
             using (var dialog = new System.Windows.Forms.FolderBrowserDialog())
             {
-                dialog.Description = "Choose the folder to scan";
+                dialog.Description = "Choose a file or folder for Microsoft Defender to scan";
                 dialog.ShowNewFolderButton = false;
                 if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
                 {
@@ -62,144 +35,202 @@ namespace DanatAntiVirus
             }
         }
 
-        private async void StartScan_Click(object sender, RoutedEventArgs e)
+        private async void RefreshStatus_Click(object sender, RoutedEventArgs e)
         {
-            if (_scanCancellation != null) return;
-            string scanner = ScannerPathBox.Text.Trim();
-            string database = DatabasePathBox.Text.Trim();
-            if (!File.Exists(scanner) || !string.Equals(Path.GetFileName(scanner), "clamscan.exe", StringComparison.OrdinalIgnoreCase))
-            {
-                SetStatus("Select a valid clamscan.exe first. No scan was started.", true);
-                return;
-            }
-            if (!Directory.Exists(database) || !Directory.Exists(_scanTarget ?? string.Empty))
-            {
-                SetStatus("Select the signature database folder and the folder to scan.", true);
-                return;
-            }
+            await RefreshDefenderStatusAsync();
+        }
 
-            string databaseError;
-            if (!HasFreshDatabases(database, out databaseError))
-            {
-                SetStatus(databaseError + " Scan blocked; no clean result can be reported.", true);
-                return;
-            }
-
-            StartScanButton.IsEnabled = false;
-            CancelScanButton.IsEnabled = true;
-            ScanLogBox.Clear();
-            _scanCancellation = new CancellationTokenSource();
+        private async Task RefreshDefenderStatusAsync()
+        {
+            RefreshStatusButton.IsEnabled = false;
+            DefenderStatusText.Text = "Checking Microsoft Defender status…";
             try
             {
-                SetStatus("Checking scanner identity…", false);
-                string version = await Task.Run(() => GetScannerVersion(scanner));
-                if (string.IsNullOrWhiteSpace(version) || !version.StartsWith("ClamAV ", StringComparison.OrdinalIgnoreCase))
+                string result = await Task.Run(GetDefenderStatus);
+                string[] fields = result.Split('|');
+                if (fields.Length != 6 || fields[0] != "DANAT")
+                    throw new InvalidOperationException("Windows did not return a valid Defender status.");
+
+                string mode = fields[1];
+                bool service = ParseBoolean(fields[2]);
+                bool antivirus = ParseBoolean(fields[3]);
+                bool realtime = ParseBoolean(fields[4]);
+                string signatureAge = fields[5];
+
+                if (mode.Equals("Normal", StringComparison.OrdinalIgnoreCase) && service && antivirus && realtime)
                 {
-                    SetStatus("The selected executable did not identify itself as ClamAV. Scan blocked.", true);
-                    return;
+                    DefenderStatusText.Text = "ACTIVE — Microsoft Defender Antivirus is running in normal mode; real-time protection is enabled.";
+                    DefenderStatusText.Foreground = new SolidColorBrush(Color.FromRgb(112, 210, 133));
+                }
+                else if (mode.IndexOf("Passive", StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    DefenderStatusText.Text = "PASSIVE MODE — another antivirus may be the primary provider. Defender is not confirmed as the active real-time protector.";
+                    DefenderStatusText.Foreground = new SolidColorBrush(Color.FromRgb(255, 198, 92));
+                }
+                else
+                {
+                    DefenderStatusText.Text = "NOT FULLY ACTIVE — service: " + service + ", antivirus: " + antivirus + ", real-time protection: " + realtime + ", mode: " + mode;
+                    DefenderStatusText.Foreground = new SolidColorBrush(Color.FromRgb(255, 120, 100));
                 }
 
-                SetStatus("Scanning in progress. Keep this window open…", false);
-                int exitCode = await RunScannerAsync(scanner, database, _scanTarget, _scanCancellation.Token);
-                if (exitCode == 0)
-                    SetStatus("Scan completed: ClamAV reported no detections. This is not a guarantee that the folder is malware-free.", false);
-                else if (exitCode == 1)
-                    SetStatus("Scan completed: ClamAV reported one or more detections. Review the results below; files were not changed.", true);
-                else
-                    SetStatus("Scanner error (exit code " + exitCode + "). This is NOT a clean scan. Check the log and signature database.", true);
-            }
-            catch (OperationCanceledException)
-            {
-                SetStatus("Scan cancelled. No clean result is available.", true);
+                SignatureAgeText.Text = "Security intelligence age: " + signatureAge + " day(s). Windows manages Defender updates.";
             }
             catch (Exception ex)
             {
-                SetStatus("Scan failed: " + ex.Message + ". No clean result is available.", true);
-                AppendLog(ex.ToString());
+                DefenderStatusText.Text = "STATUS UNAVAILABLE — " + ex.Message;
+                DefenderStatusText.Foreground = new SolidColorBrush(Color.FromRgb(255, 120, 100));
+                SignatureAgeText.Text = "Danat cannot confirm that Microsoft Defender protection is active.";
             }
             finally
             {
-                if (_scanCancellation != null) _scanCancellation.Dispose();
-                _scanCancellation = null;
-                StartScanButton.IsEnabled = true;
-                CancelScanButton.IsEnabled = false;
+                RefreshStatusButton.IsEnabled = true;
             }
         }
 
-        private void CancelScan_Click(object sender, RoutedEventArgs e)
+        private static string GetDefenderStatus()
         {
-            if (_scanCancellation != null) _scanCancellation.Cancel();
-        }
-
-        private static bool HasFreshDatabases(string directory, out string error)
-        {
-            error = null;
-            string[] names = { "main.cvd", "main.cld", "daily.cvd", "daily.cld" };
-            string main = names.Take(2).Select(n => Path.Combine(directory, n)).FirstOrDefault(File.Exists);
-            string daily = names.Skip(2).Select(n => Path.Combine(directory, n)).FirstOrDefault(File.Exists);
-            if (main == null || daily == null)
-            {
-                error = "The selected database folder must contain both main.cvd/main.cld and daily.cvd/daily.cld.";
-                return false;
-            }
-            foreach (string file in new[] { main, daily })
-            {
-                DateTime updated = File.GetLastWriteTimeUtc(file);
-                if (updated > DateTime.UtcNow.AddMinutes(5) || DateTime.UtcNow - updated > TimeSpan.FromDays(7))
-                {
-                    error = "A required signature database is older than 7 days or has an invalid timestamp.";
-                    return false;
-                }
-            }
-            return true;
-        }
-
-        private static string GetScannerVersion(string scanner)
-        {
+            const string script = "$ErrorActionPreference='Stop'; $s=Get-MpComputerStatus; Write-Output ('DANAT|' + [string]$s.AMRunningMode + '|' + [string]$s.AMServiceEnabled + '|' + [string]$s.AntivirusEnabled + '|' + [string]$s.RealTimeProtectionEnabled + '|' + [string]$s.AntivirusSignatureAge)";
             var info = new ProcessStartInfo
             {
-                FileName = scanner,
-                Arguments = "--version",
+                FileName = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "WindowsPowerShell", "v1.0", "powershell.exe"),
+                Arguments = "-NoProfile -NonInteractive -ExecutionPolicy Bypass -Command " + QuoteArgument(script),
                 UseShellExecute = false,
                 CreateNoWindow = true,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true
             };
+
             using (var process = Process.Start(info))
             {
-                if (!process.WaitForExit(10000))
+                if (!process.WaitForExit(20000))
                 {
                     process.Kill();
-                    throw new TimeoutException("ClamAV version check timed out");
+                    throw new TimeoutException("Defender status check timed out.");
                 }
-                string output = process.StandardOutput.ReadToEnd();
-                if (process.ExitCode != 0) output += process.StandardError.ReadToEnd();
-                return output.Trim();
+                string output = process.StandardOutput.ReadToEnd().Trim();
+                string error = process.StandardError.ReadToEnd().Trim();
+                if (process.ExitCode != 0)
+                    throw new InvalidOperationException(string.IsNullOrWhiteSpace(error) ? "Get-MpComputerStatus failed." : error);
+                return output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).LastOrDefault() ?? string.Empty;
             }
         }
 
-        private async Task<int> RunScannerAsync(string scanner, string database, string target, CancellationToken token)
+        private static bool ParseBoolean(string value)
+        {
+            bool parsed;
+            if (!bool.TryParse(value, out parsed))
+                throw new InvalidOperationException("Defender returned an unreadable status value.");
+            return parsed;
+        }
+
+        private static string FindMpCmdRun()
+        {
+            string programData = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
+            string platformRoot = Path.Combine(programData, "Microsoft", "Windows Defender", "Platform");
+            if (Directory.Exists(platformRoot))
+            {
+                var versions = Directory.GetDirectories(platformRoot)
+                    .Select(path => new { Path = path, Version = ParseVersion(Path.GetFileName(path)) })
+                    .Where(item => item.Version != null)
+                    .OrderByDescending(item => item.Version)
+                    .ToList();
+
+                foreach (var item in versions)
+                {
+                    string candidate = Path.Combine(item.Path, "MpCmdRun.exe");
+                    if (File.Exists(candidate)) return candidate;
+                }
+            }
+
+            string programFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
+            string fallback = Path.Combine(programFiles, "Windows Defender", "MpCmdRun.exe");
+            return File.Exists(fallback) ? fallback : null;
+        }
+
+        private static Version ParseVersion(string value)
+        {
+            Version version;
+            return Version.TryParse(value, out version) ? version : null;
+        }
+
+        private async void StartScan_Click(object sender, RoutedEventArgs e)
+        {
+            if (_scanRunning) return;
+            if (string.IsNullOrWhiteSpace(_scanTarget) || !Directory.Exists(_scanTarget) && !File.Exists(_scanTarget))
+            {
+                SetScanStatus("Choose an existing file or folder first.", true);
+                return;
+            }
+
+            string scanner = FindMpCmdRun();
+            if (scanner == null)
+            {
+                SetScanStatus("Microsoft Defender's MpCmdRun.exe was not found. This feature requires Microsoft Defender Antivirus to be installed.", true);
+                return;
+            }
+
+            _scanRunning = true;
+            StartScanButton.IsEnabled = false;
+            ChooseFolderButton.IsEnabled = false;
+            ScanLogBox.Clear();
+            SetScanStatus("Starting Microsoft Defender custom scan… Windows may display a security prompt.", false);
+
+            try
+            {
+                int exitCode = await RunDefenderScanAsync(scanner, _scanTarget);
+                if (exitCode == 0)
+                    SetScanStatus("Defender completed the custom scan (exit code 0). Review Windows Security → Protection history. No scan can guarantee that a device is malware-free.", false);
+                else if (exitCode == 2)
+                    SetScanStatus("Defender returned exit code 2: malware may remain unremediated, or a scan error occurred. Treat this result as unresolved and check the log and Protection history.", true);
+                else
+                    SetScanStatus("Defender scan returned unexpected exit code " + exitCode + ". Treat this result as unresolved.", true);
+            }
+            catch (Exception ex)
+            {
+                SetScanStatus("Defender scan could not be completed: " + ex.Message, true);
+                AppendLog(ex.ToString());
+            }
+            finally
+            {
+                _scanRunning = false;
+                StartScanButton.IsEnabled = true;
+                ChooseFolderButton.IsEnabled = true;
+            }
+        }
+
+        private async Task<int> RunDefenderScanAsync(string scanner, string target)
         {
             var info = new ProcessStartInfo
             {
                 FileName = scanner,
-                Arguments = "--database=" + QuoteArgument(database) + " --fail-if-cvd-older-than=7 --alert-exceeds-max=yes --alert-encrypted=yes --infected --recursive --no-summary --stdout " + QuoteArgument(target),
+                Arguments = "-Scan -ScanType 3 -File " + QuoteArgument(target) + " -DisableRemediation",
                 WorkingDirectory = Path.GetDirectoryName(scanner),
                 UseShellExecute = false,
                 CreateNoWindow = true,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true
             };
+
             using (var process = new Process { StartInfo = info, EnableRaisingEvents = true })
-            using (token.Register(() => { try { if (!process.HasExited) process.Kill(); } catch { } }))
             {
-                process.OutputDataReceived += (s, e) => { if (!string.IsNullOrEmpty(e.Data)) Dispatcher.BeginInvoke(new Action(() => AppendLog(e.Data))); };
-                process.ErrorDataReceived += (s, e) => { if (!string.IsNullOrEmpty(e.Data)) Dispatcher.BeginInvoke(new Action(() => AppendLog("ERROR: " + e.Data))); };
-                if (!process.Start()) throw new InvalidOperationException("Could not start ClamAV.");
+                process.OutputDataReceived += (s, e) =>
+                {
+                    if (!string.IsNullOrEmpty(e.Data))
+                        Dispatcher.BeginInvoke(new Action(() => AppendLog(e.Data)));
+                };
+                process.ErrorDataReceived += (s, e) =>
+                {
+                    if (!string.IsNullOrEmpty(e.Data))
+                        Dispatcher.BeginInvoke(new Action(() => AppendLog("ERROR: " + e.Data)));
+                };
+
+                if (!process.Start())
+                    throw new InvalidOperationException("Windows could not start Microsoft Defender.");
+
                 process.BeginOutputReadLine();
                 process.BeginErrorReadLine();
                 await Task.Run(() => process.WaitForExit());
-                token.ThrowIfCancellationRequested();
+                process.WaitForExit();
                 return process.ExitCode;
             }
         }
@@ -226,12 +257,12 @@ namespace DanatAntiVirus
             return result.ToString();
         }
 
-        private void SetStatus(string message, bool warning)
+        private void SetScanStatus(string message, bool warning)
         {
             ScanStatusText.Text = message;
-            ScanStatusText.Foreground = warning ?
-                new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(255, 198, 92)) :
-                new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(214, 166, 46));
+            ScanStatusText.Foreground = warning
+                ? new SolidColorBrush(Color.FromRgb(255, 198, 92))
+                : new SolidColorBrush(Color.FromRgb(112, 210, 133));
         }
 
         private void AppendLog(string line)
