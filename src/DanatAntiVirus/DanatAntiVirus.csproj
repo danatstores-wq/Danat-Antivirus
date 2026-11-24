@@ -22,7 +22,7 @@
     <Reference Include="PresentationFramework"/><Reference Include="System.Windows.Forms"/>
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="..\\..\\assets\\worrier.png"><Link>worrier.png</Link></Resource>
+    <Resource Include="../../assets/worrier.png"><Link>worrier.png</Link></Resource>
     <ApplicationDefinition Include="App.xaml"><Generator>MSBuild:Compile</Generator><SubType>Designer</SubType></ApplicationDefinition>
     <Compile Include="App.xaml.cs"><DependentUpon>App.xaml</DependentUpon></Compile>
     <Page Include="MainWindow.xaml"><Generator>MSBuild:Compile</Generator><SubType>Designer</SubType></Page>
