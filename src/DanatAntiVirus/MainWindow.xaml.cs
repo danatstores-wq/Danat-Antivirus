@@ -21,6 +21,7 @@ namespace DanatAntiVirus
             {
                 await RefreshDefenderStatusAsync();
                 await RefreshControlledFolderAccessAsync();
+                SetupClamAVButton.Content = FindClamScan() == null ? "SET UP CLAMAV" : "UPDATE CLAMAV";
             };
         }
 
@@ -389,7 +390,13 @@ namespace DanatAntiVirus
                 MessageBoxImage.Information);
             if (consent != MessageBoxResult.Yes) return;
 
-            string winget = FindWinget();
+            string winget;
+            try { winget = FindWinget(); }
+            catch (Exception ex)
+            {
+                SetScanStatus("Could not check for Windows Package Manager: " + ex.Message, true);
+                return;
+            }
             if (winget == null)
             {
                 SetScanStatus("Windows Package Manager (WinGet) is not available on this Windows account. Danat cannot securely automate ClamAV setup on this PC.", true);
@@ -446,7 +453,6 @@ namespace DanatAntiVirus
                 _scanRunning = false;
                 SetupClamAVButton.IsEnabled = true;
                 ClamScanButton.IsEnabled = true;
-                SetupClamAVButton.IsEnabled = true;
                 ChooseFolderButton.IsEnabled = true;
             }
         }
@@ -506,6 +512,7 @@ namespace DanatAntiVirus
                 _scanRunning = false;
                 StartScanButton.IsEnabled = true;
                 ClamScanButton.IsEnabled = true;
+                SetupClamAVButton.IsEnabled = true;
                 ChooseFolderButton.IsEnabled = true;
             }
         }
