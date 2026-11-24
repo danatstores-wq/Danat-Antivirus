@@ -12,19 +12,24 @@ This build integrates with the **Microsoft Defender Antivirus installation alrea
 - Defaults to report-only custom scans using `-DisableRemediation`, so files are not changed by that scan request.
 - Offers a separate, unchecked consent option to authorize Microsoft Defender's normal remediation actions. If selected and confirmed, Defender may quarantine or remove detections.
 - Provides a shortcut to Windows Security Protection history, where users can review Defender-managed actions and available restore options.
+- Reads the Windows Controlled Folder Access mode (disabled, enabled, audit, disk-modification-only block, or disk-modification-only audit) from Defender preferences and provides a shortcut to the Windows ransomware-protection settings page. Danat does not silently enable or modify this Windows setting.
 - Reads redirected Defender status output asynchronously to avoid blocking if PowerShell writes more output than a pipe buffer can hold.
 - Treats Defender exit code 2 as unresolved (malware may remain unremediated or a scan error occurred), never as a clean result.
-- Requests administrator privileges because Microsoft's command-line tool requires an elevated command prompt.
+- Runs without administrator privileges; Windows elevation is requested only for the Microsoft Defender scan process that requires it.
 
 **This is a controller for Microsoft Defender, not a new antivirus engine.** Defender must already be installed, enabled, and kept updated by Windows. Danat does not install Defender, replace it, or provide an independent real-time driver, ransomware behavior engine, quarantine system, or subscription backend.
 
 ## Supported platform scope
 
-The desktop application is built on .NET Framework 4.8 and includes a Windows 7 SP1 compatibility mode. On Windows 7, modern Microsoft Defender PowerShell status APIs and the Windows Security settings URI are not available; the app therefore shows a clear legacy-mode notice and opens the Windows 7 Security Center instead. It can discover the legacy Microsoft Security Essentials command-line scanner if that product is already installed, but it does not install it or claim that it provides current protection. Microsoft Security Essentials and Windows 7 are out of support, so this legacy path is for compatibility/testing only and must not be treated as adequate current security. On Windows 10/11, the modern Microsoft Defender integration remains in use.
+The supported platform is **Windows 10 and Windows 11 only**. The application uses the modern Microsoft Defender status and Windows Security interfaces; Windows 7 and Microsoft Security Essentials compatibility paths have been removed. The app targets .NET Framework 4.8.
+
+## Optional ClamAV manual scanning
+
+The preview can set up ClamAV from inside Danat using the `Cisco.ClamAV` package in the Windows Package Manager (WinGet) community source. The user initiates setup from **SET UP CLAMAV** and can review the installer/license prompts; Danat does not ask users to find or manually install a separate antivirus application. The community-maintained WinGet manifest points to installers hosted in the official Cisco-Talos ClamAV GitHub release and supplies SHA-256 hashes that WinGet checks after download. The manifest is not maintained by Cisco, and its presence does not imply Cisco endorsement of Danat. Danat installs ClamAV as a separate program; it does not bundle, modify, or link to ClamAV. ClamAV is GPL-2.0 licensed; see [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md). Danat creates a per-user FreshClam configuration and database directory, downloads ClamAV signatures, and checks signature freshness before every manual ClamAV scan, refreshing at least every four hours. The scanner reports results only and does not quarantine or delete files. Danat refuses to scan with ClamAV versions older than 1.5.5; that release fixes multiple security vulnerabilities affecting versions through 1.5.4. This minimum is a preview safeguard, not a guarantee that future releases have no vulnerabilities. It is not real-time protection. WinGet must be available on the Windows account; Danat reports a clear setup error if it is unavailable. If a future Danat release bundles or redistributes ClamAV binaries, that release must undergo a separate GPL compliance review before distribution.
 
 ## Product requirements still pending
 
-- Independent real-time protection and ransomware behavior monitoring, if a separately licensed engine can be selected.
+- Independent real-time protection and ransomware behavior monitoring; ClamAV's Windows command-line scan is on-demand only. Controlled Folder Access is a Windows Defender feature, not a Danat-owned ransomware engine.
 - Safe quarantine/restore workflow and auditable event history.
 - Secure engine/signature update strategy beyond the Windows-managed Defender service.
 - 14-day trial and server-validated US$3/year licensing.
@@ -35,7 +40,7 @@ The desktop application is built on .NET Framework 4.8 and includes a Windows 7 
 
 Open `DanatAntiVirus.sln` in Visual Studio 2022 with the .NET Framework 4.8 Developer Pack and WPF workload installed. Build the `Release` configuration.
 
-The app requests administrator privileges at startup so it can invoke Microsoft's documented elevated scan utility and read local Defender status. Windows displays a UAC prompt.
+The Danat interface runs at the signed-in user's normal privilege level. When a Microsoft Defender custom scan is requested, Danat launches only Microsoft's `MpCmdRun.exe` with Windows `runas`, so Windows displays a UAC prompt for that scan process. ClamAV setup and scanning remain in the unelevated Danat process; ClamAV does not inherit administrator privileges from the UI.
 
 ## Safety
 
