@@ -23,4 +23,4 @@ No antivirus can guarantee protection from every threat. This repository current
 Open `DanatAntiVirus.sln` in Visual Studio 2022 with the .NET Framework 4.8 Developer Pack and WPF workload installed. Build the `Release` configuration.
 
 ## Current status
-**Preview 0.1:** WPF desktop shell only. Detection engine, real-time protection, quarantine, updates, and subscription enforcement are not implemented.
+**Preview 0.2:** WPF desktop app with an optional manual ClamAV scan launcher. Users must separately install ClamAV, select `clamscan.exe`, select a local signature database folder, and choose a scan folder. The app checks for main/daily databases, blocks databases with old file timestamps, and asks ClamAV to reject databases older than 7 days. Scanner exit code 2 is treated as an error—not a clean scan. Detected files are reported but never automatically changed. This is not real-time protection, ransomware protection, quarantine, automatic signature updates, or subscription enforcement.
