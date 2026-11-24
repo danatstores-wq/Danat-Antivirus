@@ -940,7 +940,7 @@ namespace DanatAntiVirus
             try
             {
                 string systemDrive = Path.GetPathRoot(Environment.SystemDirectory);
-                await RunElevatedCommandAsync("chkdsk.exe", systemDrive + " /scan", 60 * 60 * 1000);
+                await RunElevatedCommandAsync("chkdsk.exe", systemDrive.TrimEnd(Path.DirectorySeparatorChar) + " /scan", 60 * 60 * 1000);
                 MaintenanceStatusText.Text = "Disk check process finished. Read the CHKDSK window for its findings.";
                 AppendMaintenanceLog("CHKDSK /scan finished. Review the visible Windows console for the detailed report.");
             }
