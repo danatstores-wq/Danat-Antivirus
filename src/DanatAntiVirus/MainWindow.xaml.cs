@@ -878,7 +878,8 @@ namespace DanatAntiVirus
             SetMaintenanceBusy(true, "Starting the Windows online disk scan…");
             try
             {
-                await RunElevatedCommandAsync("chkdsk.exe", "C: /scan", 60 * 60 * 1000);
+                string systemDrive = Path.GetPathRoot(Environment.SystemDirectory);
+                await RunElevatedCommandAsync("chkdsk.exe", systemDrive + " /scan", 60 * 60 * 1000);
                 MaintenanceStatusText.Text = "Disk check process finished. Read the CHKDSK window for its findings.";
                 AppendMaintenanceLog("CHKDSK /scan finished. Review the visible Windows console for the detailed report.");
             }
@@ -968,11 +969,19 @@ namespace DanatAntiVirus
 
         private void SetMaintenanceBusy(bool busy, string message)
         {
-            foreach (var button in new System.Windows.Controls.Button[]
-            {
-                (System.Windows.Controls.Button)FindName("CleanTempButton")
-            }.Where(b => b != null)) button.IsEnabled = !busy;
+            SetMaintenanceButtonsEnabled(MaintenancePanel, !busy);
             if (busy && !string.IsNullOrWhiteSpace(message)) MaintenanceStatusText.Text = message;
+        }
+
+        private static void SetMaintenanceButtonsEnabled(DependencyObject parent, bool enabled)
+        {
+            foreach (object child in LogicalTreeHelper.GetChildren(parent))
+            {
+                var button = child as System.Windows.Controls.Button;
+                if (button != null) button.IsEnabled = enabled;
+                var dependencyObject = child as DependencyObject;
+                if (dependencyObject != null) SetMaintenanceButtonsEnabled(dependencyObject, enabled);
+            }
         }
 
         private void AppendMaintenanceLog(string line)
