@@ -6,7 +6,6 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
-using Microsoft.Win32;
 
 namespace DanatAntiVirus
 {
@@ -56,11 +55,19 @@ namespace DanatAntiVirus
                 bool antivirus = ParseBoolean(fields[3]);
                 bool realtime = ParseBoolean(fields[4]);
                 string signatureAge = fields[5];
+                long signatureAgeDays;
+                if (!long.TryParse(signatureAge, out signatureAgeDays) || signatureAgeDays < 0)
+                    throw new InvalidOperationException("Defender returned an unreadable security-intelligence age.");
 
-                if (mode.Equals("Normal", StringComparison.OrdinalIgnoreCase) && service && antivirus && realtime)
+                if (mode.Equals("Normal", StringComparison.OrdinalIgnoreCase) && service && antivirus && realtime && signatureAgeDays <= 3)
                 {
-                    DefenderStatusText.Text = "ACTIVE — Microsoft Defender Antivirus is running in normal mode; real-time protection is enabled.";
+                    DefenderStatusText.Text = "ACTIVE — Microsoft Defender Antivirus is running in normal mode; real-time protection is enabled and signatures are recent.";
                     DefenderStatusText.Foreground = new SolidColorBrush(Color.FromRgb(112, 210, 133));
+                }
+                else if (mode.Equals("Normal", StringComparison.OrdinalIgnoreCase) && service && antivirus && realtime && signatureAgeDays > 3)
+                {
+                    DefenderStatusText.Text = "WARNING — real-time protection is enabled, but security intelligence is older than 3 days. Update Defender before relying on this PC for protection.";
+                    DefenderStatusText.Foreground = new SolidColorBrush(Color.FromRgb(255, 198, 92));
                 }
                 else if (mode.IndexOf("Passive", StringComparison.OrdinalIgnoreCase) >= 0)
                 {
