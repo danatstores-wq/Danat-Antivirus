@@ -37,3 +37,11 @@ Microsoft documents exit code 0 as no malware found or malware found and success
 - On-demand scan guidance: https://learn.microsoft.com/en-us/defender-endpoint/run-scan-microsoft-defender-antivirus
 - Defender status cmdlet: https://learn.microsoft.com/en-us/powershell/module/defender/get-mpcomputerstatus
 - Defender operating modes: https://learn.microsoft.com/en-us/defender-endpoint/microsoft-defender-antivirus-windows
+
+## Optional ClamAV manual scanner
+
+Danat can locate an independently installed `clamscan.exe` from PATH or the standard Program Files folders and run an on-demand scan of the selected file or folder. Danat does not download, bundle, configure, or update ClamAV. Install ClamAV separately and update its signature database before use.
+
+Exit codes are interpreted as 0 = no infected files reported, 1 = infected file(s) reported, and 2 = scan error. Output is displayed in the scan log. Danat does not delete, move, or quarantine files. This is an on-demand scanner only, not on-access or real-time protection. See the ClamAV Windows FAQ: https://docs.clamav.net/faq/faq-win32.html
+
+ClamAV is GPLv2. This integration invokes a separately installed executable and does not bundle or link against ClamAV. Any future redistribution/bundling must undergo GPL compliance review and meet applicable source-code and notice obligations. See https://docs.clamav.net/manual/Development/libclamav.html

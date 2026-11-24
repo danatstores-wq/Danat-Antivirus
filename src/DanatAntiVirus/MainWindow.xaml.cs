@@ -248,6 +248,102 @@ namespace DanatAntiVirus
             }
         }
 
+        private static string FindClamScan()
+        {
+            string pathValue = Environment.GetEnvironmentVariable("PATH") ?? string.Empty;
+            foreach (string entry in pathValue.Split(Path.PathSeparator))
+            {
+                string directory = entry.Trim().Trim('"');
+                if (directory.Length == 0) continue;
+                string candidate = Path.Combine(directory, "clamscan.exe");
+                if (File.Exists(candidate)) return candidate;
+            }
+            string pf = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
+            string pf86 = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
+            string[] candidates = {
+                Path.Combine(pf, "ClamAV", "clamscan.exe"),
+                Path.Combine(pf86, "ClamAV", "clamscan.exe")
+            };
+            return candidates.FirstOrDefault(File.Exists);
+        }
+
+        private async void ClamScan_Click(object sender, RoutedEventArgs e)
+        {
+            if (_scanRunning) return;
+            if (string.IsNullOrWhiteSpace(_scanTarget) || (!Directory.Exists(_scanTarget) && !File.Exists(_scanTarget)))
+            {
+                SetScanStatus("Choose an existing file or folder first.", true);
+                return;
+            }
+            string scanner = FindClamScan();
+            if (scanner == null)
+            {
+                SetScanStatus("ClamAV was not found. Install it separately and update its signature database before scanning. Danat does not bundle ClamAV.", true);
+                return;
+            }
+            _scanRunning = true;
+            StartScanButton.IsEnabled = false;
+            ClamScanButton.IsEnabled = false;
+            ChooseFolderButton.IsEnabled = false;
+            ScanLogBox.Clear();
+            SetScanStatus("Starting ClamAV on-demand scan. This is not real-time protection.", false);
+            try
+            {
+                int code = await RunClamScanAsync(scanner, _scanTarget);
+                if (code == 0)
+                    SetScanStatus("ClamAV reported no infected files in this scan. This does not guarantee the system is malware-free.", false);
+                else if (code == 1)
+                    SetScanStatus("ClamAV reported infected file(s). Review the output. Danat has not deleted or quarantined anything.", true);
+                else
+                    SetScanStatus("ClamAV returned error code " + code + ". Treat this scan as incomplete.", true);
+            }
+            catch (Exception ex)
+            {
+                SetScanStatus("ClamAV scan could not be completed: " + ex.Message, true);
+                AppendLog(ex.ToString());
+            }
+            finally
+            {
+                _scanRunning = false;
+                StartScanButton.IsEnabled = true;
+                ClamScanButton.IsEnabled = true;
+                ChooseFolderButton.IsEnabled = true;
+            }
+        }
+
+        private async Task<int> RunClamScanAsync(string scanner, string target)
+        {
+            var info = new ProcessStartInfo
+            {
+                FileName = scanner,
+                Arguments = "--infected --no-summary --stdout " + QuoteArgument(target),
+                WorkingDirectory = Path.GetDirectoryName(scanner),
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
+            };
+            using (var process = new Process { StartInfo = info, EnableRaisingEvents = true })
+            {
+                process.OutputDataReceived += (s, e) =>
+                {
+                    if (!string.IsNullOrEmpty(e.Data))
+                        Dispatcher.BeginInvoke(new Action(() => AppendLog(e.Data)));
+                };
+                process.ErrorDataReceived += (s, e) =>
+                {
+                    if (!string.IsNullOrEmpty(e.Data))
+                        Dispatcher.BeginInvoke(new Action(() => AppendLog("CLAMAV: " + e.Data)));
+                };
+                if (!process.Start()) throw new InvalidOperationException("Windows could not start ClamAV.");
+                process.BeginOutputReadLine();
+                process.BeginErrorReadLine();
+                await Task.Run(() => process.WaitForExit());
+                process.WaitForExit();
+                return process.ExitCode;
+            }
+        }
+
         private async Task<int> RunDefenderScanAsync(string scanner, string target, bool allowRemediation)
         {
             var info = new ProcessStartInfo

@@ -22,9 +22,13 @@ This build integrates with the **Microsoft Defender Antivirus installation alrea
 
 The desktop application is built on .NET Framework 4.8 and includes a Windows 7 SP1 compatibility mode. On Windows 7, modern Microsoft Defender PowerShell status APIs and the Windows Security settings URI are not available; the app therefore shows a clear legacy-mode notice and opens the Windows 7 Security Center instead. It can discover the legacy Microsoft Security Essentials command-line scanner if that product is already installed, but it does not install it or claim that it provides current protection. Microsoft Security Essentials and Windows 7 are out of support, so this legacy path is for compatibility/testing only and must not be treated as adequate current security. On Windows 10/11, the modern Microsoft Defender integration remains in use.
 
+## Optional ClamAV manual scanning
+
+The preview can invoke an independently installed `clamscan.exe` for an additional on-demand scan. ClamAV is not bundled or automatically updated by Danat; install it separately and update its signature database first. The scan reports results only and does not quarantine or delete files. It is not real-time protection.
+
 ## Product requirements still pending
 
-- Independent real-time protection and ransomware behavior monitoring, if a separately licensed engine can be selected.
+- Independent real-time protection and ransomware behavior monitoring; ClamAV's Windows command-line scan is on-demand only.
 - Safe quarantine/restore workflow and auditable event history.
 - Secure engine/signature update strategy beyond the Windows-managed Defender service.
 - 14-day trial and server-validated US$3/year licensing.
