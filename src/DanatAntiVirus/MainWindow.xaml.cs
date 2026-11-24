@@ -224,8 +224,8 @@ namespace DanatAntiVirus
                 int exitCode = await RunDefenderScanAsync(scanner, _scanTarget, allowRemediation);
                 if (exitCode == 0)
                     SetScanStatus(allowRemediation
-                        ? "Defender completed the scan (exit code 0). Defender reports no unresolved threat; review Windows Security Protection history for any actions taken."
-                        : "Defender completed the report-only scan (exit code 0). Review the scan output above; detected files were not remediated by this scan request.", false);
+                        ? "Defender scan process completed successfully (exit code 0). Review Windows Security Protection history for detections and any actions taken; Danat does not infer that the device is clean from the exit code alone."
+                        : "Defender report-only scan process completed (exit code 0). No remediation was authorized by Danat. Review Windows Security Protection history for detections; Danat does not infer that the device is clean from the exit code alone.", false);
                 else if (exitCode == 2)
                     SetScanStatus("Defender returned exit code 2. A threat may remain unremediated, user action may be required, or a scan error occurred. Treat this result as unresolved; inspect scan output and Protection history.", true);
                 else
