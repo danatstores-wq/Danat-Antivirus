@@ -815,8 +815,8 @@ namespace DanatAntiVirus
             {
                 var result = await Task.Run(() => CleanUserTempFiles());
                 MaintenanceStatusText.Text = "اكتمل التنظيف. الملفات المحذوفة: " + result.Item1 +
-                    " file(s); skipped " + result.Item2 + " file(s).";
-                AppendMaintenanceLog("تنظيف الملفات المؤقتة: " + result.Item1 + " deleted; " + result.Item2 + " skipped.");
+                    " ملف / files; تم تخطي " + result.Item2 + " ملف / files.";
+                AppendMaintenanceLog("تنظيف الملفات المؤقتة: " + result.Item1 + " محذوف / deleted; " + result.Item2 + " تم تخطيه / skipped.");
             }
             catch (Exception ex)
             {
@@ -908,8 +908,8 @@ namespace DanatAntiVirus
                     return Tuple.Create(deleted, skipped);
                 });
                 MaintenanceStatusText.Text = "اكتمل مسح ذاكرة الصور المصغّرة. الملفات المحذوفة: " + result.Item1 +
-                    " file(s); skipped " + result.Item2 + " file(s). Windows will rebuild thumbnails.";
-                AppendMaintenanceLog("ذاكرة الصور المصغّرة: " + result.Item1 + " deleted; " + result.Item2 + " skipped.");
+                    " ملف / files; تم تخطي " + result.Item2 + " ملف / files. وسيعيد ويندوز إنشاء الصور المصغّرة. | Windows will rebuild thumbnails.";
+                AppendMaintenanceLog("ذاكرة الصور المصغّرة: " + result.Item1 + " محذوف / deleted; " + result.Item2 + " تم تخطيه / skipped.");
             }
             catch (Exception ex) { MaintenanceStatusText.Text = "Thumbnail cache could not be cleared: " + ex.Message; }
             finally { SetMaintenanceBusy(false, null); }
