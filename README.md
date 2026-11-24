@@ -25,7 +25,7 @@ The supported platform is **Windows 10 and Windows 11 only**. The application us
 
 ## Optional ClamAV manual scanning
 
-The preview can invoke an independently installed `clamscan.exe` for an additional on-demand scan. ClamAV is not bundled or automatically updated by Danat; install it separately and update its signature database first. The scan reports results only and does not quarantine or delete files. It is not real-time protection.
+The preview can set up ClamAV from inside Danat using the Cisco.ClamAV package in the Windows Package Manager (WinGet) community source. The user initiates setup from the **SET UP CLAMAV** button and can review the installer/license prompts; Danat does not ask users to find or manually install a separate antivirus application. WinGet validates the package installer hash against its published manifest. Danat creates a per-user FreshClam configuration and database directory, downloads the official ClamAV signatures, and refreshes signatures before every manual ClamAV scan. The button becomes **UPDATE CLAMAV** after setup to check for an engine update and refresh signatures. The scanner reports results only and does not quarantine or delete files. It is not real-time protection. WinGet must be available on the Windows account; Danat reports a clear setup error if it is unavailable.
 
 ## Product requirements still pending
 

@@ -40,7 +40,9 @@ Microsoft documents exit code 0 as no malware found or malware found and success
 
 ## Optional ClamAV manual scanner
 
-Danat can locate an independently installed `clamscan.exe` from PATH or the standard Program Files folders and run an on-demand scan of the selected file or folder. Danat does not download, bundle, configure, or update ClamAV. Install ClamAV separately and update its signature database before use.
+Danat provides an in-app **SET UP CLAMAV** action. After explicit user confirmation, it invokes Windows Package Manager with the exact package identifier `Cisco.ClamAV` from the `winget` source. WinGet selects the matching Windows architecture and validates the installer hash against the package manifest; the installation and license prompts remain visible to the user. Danat does not host or repackage ClamAV binaries. If ClamAV is already present, the action checks for an engine update instead.
+
+After setup, Danat creates a per-user configuration under `%LOCALAPPDATA%\DanatAntiVirus\ClamAV` and stores signatures in its writable `Database` subfolder. It invokes the installed `freshclam.exe` with that configuration before each ClamAV scan and cancels the scan if signature updating fails. ClamAV's own signed database verification remains enabled. Danat does not install a background on-access service or claim real-time protection. WinGet must be available; if it is not, setup stops with a clear error rather than downloading an unverified installer.
 
 Exit codes are interpreted as 0 = no infected files reported, 1 = infected file(s) reported, and 2 = scan error. Output is displayed in the scan log. Danat does not delete, move, or quarantine files. This is an on-demand scanner only, not on-access or real-time protection. See the ClamAV Windows FAQ: https://docs.clamav.net/faq/faq-win32.html
 

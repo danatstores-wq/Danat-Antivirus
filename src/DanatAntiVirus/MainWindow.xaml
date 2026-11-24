@@ -133,6 +133,8 @@
                                     <Button Content="OPEN PROTECTION HISTORY" Click="OpenProtectionHistory_Click"
                                             Style="{StaticResource DarkButton}" Margin="9,0,0,0"/>
                                 </StackPanel>
+                                <Button x:Name="SetupClamAVButton" Content="SET UP CLAMAV" Click="SetupClamAV_Click"
+                                        Style="{StaticResource DarkButton}" HorizontalAlignment="Left" Margin="0,10,0,0"/>
                                 <TextBlock x:Name="ScanStatusText" Text="Ready. Microsoft Defender status has not yet been verified."
                                            Foreground="#FFFFC65C" FontSize="11" FontWeight="Bold" TextWrapping="Wrap" Margin="0,14,0,8"/>
                                 <TextBox x:Name="ScanLogBox" Height="112" IsReadOnly="True" AcceptsReturn="True"
