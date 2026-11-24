@@ -37,7 +37,7 @@ The preview can set up ClamAV from inside Danat using the `Cisco.ClamAV` package
 - Runtime testing on clean Windows 10 and Windows 11 virtual machines, including EICAR test-file handling. Do not test live malware on a normal computer.
 
 
-## Windows maintenance center
+## Windows maintenance center | مركز صيانة ويندوز
 
 The Windows Tools & Optimization panel provides shortcuts and guarded actions for common maintenance:
 
@@ -59,3 +59,8 @@ The Danat interface runs at the signed-in user's normal privilege level. When a 
 ## Safety
 
 No antivirus can guarantee protection from every threat. Danat must not show a protected state unless the underlying engine's actual state has been verified. A successful custom scan is not a guarantee that a device is malware-free.
+
+
+### Arabic and English interface | الواجهة العربية والإنجليزية
+
+The maintenance center displays tool names, confirmations, status messages, and safety notices in both English and Arabic. | يعرض مركز الصيانة أسماء الأدوات ورسائل التأكيد والحالة والتنبيهات باللغتين العربية والإنجليزية.
