@@ -635,37 +635,30 @@ namespace DanatAntiVirus
 
         private async Task<int> RunDefenderScanAsync(string scanner, string target, bool allowRemediation)
         {
+            // MpCmdRun requires elevation. Elevate only this Microsoft-signed scan process;
+            // the Danat UI and ClamAV scanner remain at the signed-in user's privilege level.
             var info = new ProcessStartInfo
             {
                 FileName = scanner,
                 Arguments = "-Scan -ScanType 3 -File " + QuoteArgument(target) + (allowRemediation ? string.Empty : " -DisableRemediation"),
                 WorkingDirectory = Path.GetDirectoryName(scanner),
-                UseShellExecute = false,
-                CreateNoWindow = true,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true
+                UseShellExecute = true,
+                Verb = "runas",
+                CreateNoWindow = false
             };
 
-            using (var process = new Process { StartInfo = info, EnableRaisingEvents = true })
+            using (var process = Process.Start(info))
             {
-                process.OutputDataReceived += (s, e) =>
+                if (process == null)
+                    throw new InvalidOperationException("Windows could not start Microsoft Defender. Approve the Windows elevation prompt to continue.");
+                AppendLog("Microsoft Defender scan started in a separately elevated process. Danat and ClamAV remain unelevated.");
+                bool exited = await Task.Run(() => process.WaitForExit(30 * 60 * 1000));
+                if (!exited)
                 {
-                    if (!string.IsNullOrEmpty(e.Data))
-                        Dispatcher.BeginInvoke(new Action(() => AppendLog(e.Data)));
-                };
-                process.ErrorDataReceived += (s, e) =>
-                {
-                    if (!string.IsNullOrEmpty(e.Data))
-                        Dispatcher.BeginInvoke(new Action(() => AppendLog("ERROR: " + e.Data)));
-                };
-
-                if (!process.Start())
-                    throw new InvalidOperationException("Windows could not start Microsoft Defender.");
-
-                process.BeginOutputReadLine();
-                process.BeginErrorReadLine();
-                await Task.Run(() => process.WaitForExit());
-                process.WaitForExit();
+                    try { process.Kill(); } catch { }
+                    throw new TimeoutException("Microsoft Defender scan exceeded 30 minutes.");
+                }
+                AppendLog("Microsoft Defender process exit code: " + process.ExitCode);
                 return process.ExitCode;
             }
         }
