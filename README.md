@@ -41,8 +41,9 @@ The preview can set up ClamAV from inside Danat using the `Cisco.ClamAV` package
 
 The Windows Tools & Optimization panel provides shortcuts and guarded actions for common maintenance:
 
-- Clean files older than seven days from the signed-in user's TEMP folder only. Files in use are skipped; personal folders, Downloads, browser profiles, and Windows system folders are not targeted.
-- Flush the Windows DNS resolver cache.
+- Clean files older than seven days from the signed-in user's TEMP folder and its subfolders. The cleanup does not follow junctions or symbolic links, skips files in use, and never targets personal folders, Downloads, browser profiles, or Windows system folders.
+- Clear the current user's Windows thumbnail-cache database files; Windows rebuilds them and files in use are skipped.
+- Flush the Windows DNS resolver cache (with Windows administrator approval).
 - Run an online NTFS disk scan on the Windows system drive with CHKDSK /scan (no offline repair is scheduled).
 - Run Microsoft's DISM /Online /Cleanup-Image /RestoreHealth and System File Checker /scannow with a Windows UAC prompt. Their own console output is authoritative; Danat does not report repairs as successful based only on process launch.
 - Open Windows Storage, Startup Apps, Network settings, and Drive Optimization pages.
