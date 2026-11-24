@@ -463,7 +463,7 @@ namespace DanatAntiVirus
                 if (updateCode != 0)
                     throw new InvalidOperationException("FreshClam returned exit code " + updateCode + ". The signature database is not confirmed current.");
 
-                SetScanStatus("ClamAV is installed and its virus signatures are updated. Danat will refresh signatures before each ClamAV scan.", false);
+                SetScanStatus("ClamAV is installed and its virus signatures are updated. Danat checks signature freshness before each ClamAV scan and refreshes at least every four hours.", false);
                 SetupClamAVButton.Content = "UPDATE CLAMAV";
             }
             catch (Exception ex)
