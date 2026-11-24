@@ -1,44 +1,197 @@
-<Window x:Class="DanatAntiVirus.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
- Title="Danat Anti-Virus" Height="760" Width="1120" MinHeight="650" MinWidth="940" WindowStartupLocation="CenterScreen" Background="#FF090909" Foreground="#FFF5E9C8">
- <Window.Resources>
-  <Style x:Key="NavButton" TargetType="Button"><Setter Property="Background" Value="#FF191919"/><Setter Property="Foreground" Value="#FFE9D49A"/><Setter Property="BorderBrush" Value="#FF3A301B"/><Setter Property="BorderThickness" Value="1"/><Setter Property="Padding" Value="16,12"/><Setter Property="Margin" Value="0,0,0,10"/><Setter Property="HorizontalContentAlignment" Value="Left"/><Setter Property="FontSize" Value="14"/></Style>
- </Window.Resources>
- <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="232"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-  <Border Grid.Column="0" Background="#FF111111" BorderBrush="#FF302714" BorderThickness="0,0,1,0" Padding="20"><DockPanel>
-   <StackPanel DockPanel.Dock="Top">
-    <Border Width="76" Height="76" CornerRadius="38" BorderBrush="#FFD6A62E" BorderThickness="2" Background="#FF201A0B" HorizontalAlignment="Left" Margin="0,4,0,14"><TextBlock Text="D" FontSize="49" FontWeight="Bold" Foreground="#FFFFD56A" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
-    <TextBlock Text="DANAT" FontSize="22" FontWeight="Bold" Foreground="#FFFFD56A"/><TextBlock Text="ANTI-VIRUS" FontSize="12" Foreground="#FFB9A36D" Margin="0,0,0,30"/>
-    <Button Style="{StaticResource NavButton}" Content="◈   Dashboard"/><Button Style="{StaticResource NavButton}" Content="⌕   Scan computer" IsEnabled="False"/><Button Style="{StaticResource NavButton}" Content="▣   Quarantine" IsEnabled="False"/><Button Style="{StaticResource NavButton}" Content="↻   Updates" IsEnabled="False"/><Button Style="{StaticResource NavButton}" Content="⚙   Settings" IsEnabled="False"/>
-   </StackPanel><StackPanel DockPanel.Dock="Bottom"><TextBlock Text="VERSION 0.3 • ENGINE INTEGRATION" Foreground="#FF887B59" FontSize="10"/><TextBlock Text="Uses Microsoft Defender Antivirus" Foreground="#FFB9A36D" FontSize="11" TextWrapping="Wrap" Margin="0,6,0,0"/></StackPanel>
-  </DockPanel></Border>
-  <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto"><StackPanel Margin="34,28,34,34">
-   <DockPanel><StackPanel><TextBlock Text="SECURITY CENTER" Foreground="#FFD6A62E" FontSize="12" FontWeight="Bold"/><TextBlock Text="Your digital fortress" FontSize="30" FontWeight="SemiBold" Margin="0,5,0,0"/></StackPanel><Border DockPanel.Dock="Right" Background="#FF241D0E" BorderBrush="#FF6F5420" BorderThickness="1" CornerRadius="14" Padding="13,8" VerticalAlignment="Center"><TextBlock Text="ENGINE INTEGRATION" Foreground="#FFFFD56A" FontSize="11" FontWeight="Bold"/></Border></DockPanel>
-   <Border Background="#FF17130B" BorderBrush="#FF72551C" BorderThickness="1" CornerRadius="16" Padding="24" Margin="0,26,0,18"><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="210"/></Grid.ColumnDefinitions>
-    <StackPanel VerticalAlignment="Center"><TextBlock Text="DANAT ANTI-VIRUS" Foreground="#FFFFD56A" FontSize="13" FontWeight="Bold"/><TextBlock Text="Windows Defender integration" FontSize="25" FontWeight="SemiBold" Margin="0,8"/><TextBlock Text="Danat now checks and launches the Microsoft Defender Antivirus engine already installed in Windows. Defender remains responsible for real-time protection and its own security updates." Foreground="#FFC5B995" FontSize="13" TextWrapping="Wrap" MaxWidth="560"/><TextBlock Text="IMPORTANT: DANAT DOES NOT REPLACE MICROSOFT DEFENDER" Foreground="#FFFFC65C" FontSize="11" FontWeight="Bold" Margin="0,16,0,0"/></StackPanel>
-    <Border Grid.Column="1" Width="174" Height="174" CornerRadius="87" BorderBrush="#FFD6A62E" BorderThickness="3" Background="#FF0C0B08" HorizontalAlignment="Center" VerticalAlignment="Center"><Grid><Ellipse Margin="9" Stroke="#FF5E471B" StrokeThickness="1"/><TextBlock Text="D" FontSize="114" FontWeight="Bold" Foreground="#FFFFD56A" HorizontalAlignment="Center" VerticalAlignment="Center"/></Grid></Border>
-   </Grid></Border>
-   <TextBlock Text="MICROSOFT DEFENDER STATUS" Foreground="#FFD6A62E" FontWeight="Bold" FontSize="12" Margin="0,10,0,12"/>
-   <Border Background="#FF171717" BorderBrush="#FF72551C" BorderThickness="1" CornerRadius="12" Padding="18">
-    <StackPanel>
-     <TextBlock Text="Live protection status from Windows" FontSize="18" FontWeight="SemiBold"/>
-     <TextBlock x:Name="DefenderStatusText" Text="Checking Microsoft Defender status…" Foreground="#FFFFC65C" FontSize="13" TextWrapping="Wrap" Margin="0,10,0,8"/>
-     <TextBlock x:Name="SignatureAgeText" Text="Checking security intelligence age…" Foreground="#FFC5B995" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,12"/>
-     <Button x:Name="RefreshStatusButton" Content="REFRESH DEFENDER STATUS" Click="RefreshStatus_Click" HorizontalAlignment="Left" Padding="16,9" Background="#FF302820" Foreground="#FFE9D49A" BorderBrush="#FF72551C"/>
-    </StackPanel>
-   </Border>
-   <TextBlock Text="ON-DEMAND MALWARE SCAN" Foreground="#FFD6A62E" FontWeight="Bold" FontSize="12" Margin="0,22,0,12"/>
-   <Border Background="#FF171717" BorderBrush="#FF72551C" BorderThickness="1" CornerRadius="12" Padding="18">
-    <StackPanel>
-     <TextBlock Text="Scan using Microsoft Defender Antivirus" FontSize="18" FontWeight="SemiBold"/>
-     <TextBlock Text="Choose a folder and Danat will start a genuine Microsoft Defender custom scan. By default, this is a report-only scan. You can optionally authorize Microsoft Defender to take its normal remediation action on detections. Review results in the scan output or Windows Security Protection history." Foreground="#FFC5B995" FontSize="12" TextWrapping="Wrap" Margin="0,5,0,14"/>
-     <DockPanel Margin="0,0,0,14"><TextBlock Text="File or folder to scan" Foreground="#FFE9D49A" FontSize="12" FontWeight="Bold" VerticalAlignment="Center"/><Button x:Name="ChooseFolderButton" Content="Choose folder…" Click="ChooseFolder_Click" DockPanel.Dock="Right" Padding="12,6" Background="#FF3A2D12" Foreground="#FFFFD56A" BorderBrush="#FF72551C"/></DockPanel>
-     <TextBlock x:Name="TargetFolderText" Text="No scan target selected." Foreground="#FFAAA08A" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,12"/>
-     <CheckBox x:Name="AllowRemediationCheckBox" Content="I authorize Microsoft Defender to quarantine or remediate threats found in this scan" IsChecked="False" Foreground="#FFFFC65C" FontSize="12" Margin="0,0,0,12"/><StackPanel Orientation="Horizontal"><Button x:Name="StartScanButton" Content="SCAN WITH MICROSOFT DEFENDER" Click="StartScan_Click" Padding="18,10" Background="#FFD6A62E" Foreground="#FF17120A" BorderBrush="#FFFFD56A" FontWeight="Bold"/><Button Content="OPEN PROTECTION HISTORY" Click="OpenProtectionHistory_Click" Margin="10,0,0,0" Padding="14,10" Background="#FF302820" Foreground="#FFE9D49A" BorderBrush="#FF72551C"/></StackPanel>
-     <TextBlock x:Name="ScanStatusText" Text="Ready. Microsoft Defender status has not yet been verified." Foreground="#FFFFC65C" FontSize="12" FontWeight="Bold" TextWrapping="Wrap" Margin="0,14,0,8"/>
-     <TextBox x:Name="ScanLogBox" Height="145" IsReadOnly="True" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" TextWrapping="Wrap" Background="#FF0D0D0D" Foreground="#FFE8DDBB" BorderBrush="#FF37302A" Padding="8"/>
-    </StackPanel>
-   </Border>
-   <Border Background="#FF171717" BorderBrush="#FF37302A" BorderThickness="1" CornerRadius="12" Padding="18" Margin="0,18,0,0"><StackPanel><TextBlock Text="CURRENT LIMITATIONS" Foreground="#FFD6A62E" FontSize="12" FontWeight="Bold"/><TextBlock Text="This version is a Microsoft Defender controller, not a separate antivirus engine. It does not install or replace Defender, provide its own real-time file-system driver, quarantine manager, ransomware behavior engine, or subscription service. Microsoft Defender must remain enabled and up to date. Windows 7 is not supported by this integration." Foreground="#FFC5B995" TextWrapping="Wrap" Margin="0,9,0,0"/></StackPanel></Border>
-  </StackPanel></ScrollViewer>
- </Grid>
+<Window x:Class="DanatAntiVirus.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Danat Anti-Virus" Height="768" Width="1376" MinHeight="700" MinWidth="1120"
+        WindowStartupLocation="CenterScreen" Background="#FF090909" Foreground="#FFF5E9C8">
+    <Window.Resources>
+        <Style x:Key="NavButton" TargetType="Button">
+            <Setter Property="Height" Value="42"/>
+            <Setter Property="Margin" Value="0,0,0,10"/>
+            <Setter Property="Padding" Value="13,8"/>
+            <Setter Property="Background" Value="#FF171717"/>
+            <Setter Property="Foreground" Value="#FFE9D49A"/>
+            <Setter Property="BorderBrush" Value="#FF79602B"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style x:Key="GoldButton" TargetType="Button">
+            <Setter Property="Background" Value="#FFD7AA36"/>
+            <Setter Property="Foreground" Value="#FF17120A"/>
+            <Setter Property="BorderBrush" Value="#FFFFD76A"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="17,10"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style x:Key="DarkButton" TargetType="Button">
+            <Setter Property="Background" Value="#FF211D16"/>
+            <Setter Property="Foreground" Value="#FFFFD56A"/>
+            <Setter Property="BorderBrush" Value="#FF79602B"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="14,9"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="190"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Left navigation rail -->
+        <Border Grid.Column="0" Background="#FF111111" BorderBrush="#FF3A2D16" BorderThickness="0,0,1,0" Padding="16,20">
+            <DockPanel LastChildFill="True">
+                <StackPanel DockPanel.Dock="Top">
+                    <Border Width="66" Height="66" CornerRadius="33" BorderBrush="#FFE2B84F" BorderThickness="2"
+                            Background="#FF1B170E" HorizontalAlignment="Left" Margin="0,0,0,12">
+                        <Grid>
+                            <TextBlock Text="D" FontSize="46" FontWeight="Bold" Foreground="#FFFFD76A"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Grid>
+                    </Border>
+                    <TextBlock Text="DANAT" FontSize="20" FontWeight="Bold" Foreground="#FFFFD56A"/>
+                    <TextBlock Text="ANTI-VIRUS" FontSize="10" Foreground="#FFC6B27C" Margin="0,0,0,28"/>
+                    <Button Style="{StaticResource NavButton}" Content="✧   Dashboard" Background="#FF4A3918" BorderBrush="#FFD8AD45"/>
+                    <Button Style="{StaticResource NavButton}" Content="⌕   Scan computer" Click="ChooseFolder_Click"/>
+                    <Button Style="{StaticResource NavButton}" Content="▣   Quarantine" IsEnabled="False" Opacity="0.7"/>
+                    <Button Style="{StaticResource NavButton}" Content="↻   Updates" IsEnabled="False" Opacity="0.7"/>
+                    <Button Style="{StaticResource NavButton}" Content="⚙   Settings" IsEnabled="False" Opacity="0.7"/>
+                </StackPanel>
+                <StackPanel DockPanel.Dock="Bottom" VerticalAlignment="Bottom">
+                    <TextBlock Text="VERSION 0.4 • PREVIEW BUILD" Foreground="#FF8D805F" FontSize="9"/>
+                    <TextBlock Text="Powered by Microsoft Defender" Foreground="#FFB9A36D" FontSize="10" TextWrapping="Wrap" Margin="0,5,0,0"/>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- Main dashboard -->
+        <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Margin="28,22,32,26">
+                <DockPanel LastChildFill="True" Margin="0,0,0,15">
+                    <Border DockPanel.Dock="Right" Background="#FF332814" BorderBrush="#FF9D7B32" BorderThickness="1"
+                            CornerRadius="14" Padding="12,6" VerticalAlignment="Center">
+                        <TextBlock Text="● PREVIEW BUILD" Foreground="#FFFFD56A" FontSize="10" FontWeight="Bold"/>
+                    </Border>
+                    <TextBlock Text="YOUR DIGITAL FORTRESS" FontSize="31" FontWeight="Bold" Foreground="#FFFFE5A0"
+                               VerticalAlignment="Center"/>
+                </DockPanel>
+
+                <!-- Protection status hero -->
+                <Border Background="#FF17130B" BorderBrush="#FFD1A64A" BorderThickness="1.5" CornerRadius="14"
+                        Padding="22" Margin="0,0,0,18">
+                    <Grid MinHeight="142">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="230"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="DANAT ANTI-VIRUS" Foreground="#FFFFD56A" FontSize="13" FontWeight="Bold"/>
+                            <TextBlock Text="Protection status" FontSize="27" FontWeight="SemiBold" Margin="0,5,0,2"/>
+                            <TextBlock Text="Live security status from Microsoft Defender Antivirus." Foreground="#FFC9BEA0"
+                                       FontSize="12" TextWrapping="Wrap"/>
+                            <TextBlock x:Name="DefenderStatusText" Text="Checking Microsoft Defender status…"
+                                       Foreground="#FFFFC65C" FontSize="13" FontWeight="Bold" TextWrapping="Wrap" Margin="0,13,0,4"/>
+                            <TextBlock x:Name="SignatureAgeText" Text="Checking security intelligence age…"
+                                       Foreground="#FFC5B995" FontSize="11" TextWrapping="Wrap"/>
+                        </StackPanel>
+                        <Grid Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" Width="178" Height="142">
+                            <Ellipse Stroke="#FF6D5423" StrokeThickness="2" Margin="5"/>
+                            <Ellipse Stroke="#FFD6A62E" StrokeThickness="1" Margin="15"/>
+                            <Ellipse Fill="#FF0B0B0B" Stroke="#FFE0B74F" StrokeThickness="3" Margin="28"/>
+                            <TextBlock Text="D" FontSize="91" FontWeight="Bold" Foreground="#FFFFD56A"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <TextBlock Text="◈" FontSize="27" Foreground="#FFFFE8A3"
+                                       HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,-2,0,0"/>
+                        </Grid>
+                    </Grid>
+                </Border>
+
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="1.25*"/>
+                        <ColumnDefinition Width="0.75*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Actual Defender scan controls -->
+                    <Border Grid.Column="0" Background="#FF151515" BorderBrush="#FF72551C" BorderThickness="1"
+                            CornerRadius="12" Padding="18" Margin="0,0,14,0">
+                        <StackPanel>
+                            <TextBlock Text="MICROSOFT DEFENDER SCAN" Foreground="#FFFFD56A" FontSize="12" FontWeight="Bold"/>
+                            <TextBlock Text="Scan your computer" FontSize="23" FontWeight="SemiBold" Margin="0,5,0,2"/>
+                            <TextBlock Text="Choose a file or folder. Danat will launch a genuine Microsoft Defender custom scan."
+                                       Foreground="#FFC5B995" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,14"/>
+                            <TextBlock Text="FILE OR FOLDER TO SCAN" Foreground="#FFE9D49A" FontSize="11" FontWeight="Bold" Margin="0,0,0,6"/>
+                            <DockPanel Margin="0,0,0,10">
+                                <Button x:Name="ChooseFolderButton" Content="CHOOSE FOLDER…" Click="ChooseFolder_Click"
+                                        DockPanel.Dock="Right" Style="{StaticResource GoldButton}" Padding="13,8"/>
+                                <TextBlock x:Name="TargetFolderText" Text="No scan target selected." Foreground="#FFB9AD8E"
+                                           VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,0,12,0"/>
+                            </DockPanel>
+                            <CheckBox x:Name="AllowRemediationCheckBox"
+                                      Content="I authorize Microsoft Defender to quarantine or remediate threats found in this scan"
+                                      IsChecked="False" Foreground="#FFFFC65C" FontSize="11" TextWrapping="Wrap"
+                                      Margin="0,6,0,14"/>
+                            <StackPanel Orientation="Horizontal">
+                                <Button x:Name="StartScanButton" Content="START SCAN" Click="StartScan_Click" Style="{StaticResource GoldButton}"/>
+                                <Button Content="OPEN PROTECTION HISTORY" Click="OpenProtectionHistory_Click"
+                                        Style="{StaticResource DarkButton}" Margin="9,0,0,0"/>
+                            </StackPanel>
+                            <TextBlock x:Name="ScanStatusText" Text="Ready. Microsoft Defender status has not yet been verified."
+                                       Foreground="#FFFFC65C" FontSize="11" FontWeight="Bold" TextWrapping="Wrap" Margin="0,14,0,8"/>
+                            <TextBox x:Name="ScanLogBox" Height="112" IsReadOnly="True" AcceptsReturn="True"
+                                     VerticalScrollBarVisibility="Auto" TextWrapping="Wrap" Background="#FF0B0B0B"
+                                     Foreground="#FFE8DDBB" BorderBrush="#FF37302A" Padding="8"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Decorative shield panel, not a fake protection indicator -->
+                    <Border Grid.Column="1" Background="#FF11100C" BorderBrush="#FF72551C" BorderThickness="1"
+                            CornerRadius="12" Padding="14">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Grid>
+                                <Ellipse Width="226" Height="226" Stroke="#FF5E471B" StrokeThickness="1.5"
+                                         HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                <Ellipse Width="194" Height="194" Stroke="#FFB88A32" StrokeThickness="2"
+                                         HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                <Border Width="145" Height="166" Background="#FF241B0A" BorderBrush="#FFE1B44A"
+                                        BorderThickness="3" CornerRadius="20" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <Grid>
+                                        <TextBlock Text="D" FontSize="104" FontWeight="Bold" Foreground="#FFFFD56A"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        <TextBlock Text="DANAT" FontSize="12" FontWeight="Bold" Foreground="#FFFFE8A3"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,13"/>
+                                    </Grid>
+                                </Border>
+                            </Grid>
+                            <StackPanel Grid.Row="1" Margin="0,10,0,0">
+                                <TextBlock Text="DEFENDER ENGINE INTEGRATION" Foreground="#FFFFD56A" FontSize="11"
+                                           FontWeight="Bold" HorizontalAlignment="Center"/>
+                                <TextBlock Text="Microsoft Defender remains responsible for real-time protection, threat intelligence and remediation."
+                                           Foreground="#FFC5B995" FontSize="11" TextWrapping="Wrap" TextAlignment="Center"
+                                           Margin="4,6,4,0"/>
+                                <Button x:Name="RefreshStatusButton" Content="REFRESH PROTECTION STATUS" Click="RefreshStatus_Click"
+                                        Style="{StaticResource DarkButton}" HorizontalAlignment="Stretch" Margin="0,12,0,0"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </Grid>
+
+                <Border Background="#FF171717" BorderBrush="#FF37302A" BorderThickness="1" CornerRadius="10"
+                        Padding="14" Margin="0,16,0,0">
+                    <StackPanel>
+                        <TextBlock Text="IMPORTANT SECURITY INFORMATION" Foreground="#FFD6A62E" FontSize="11" FontWeight="Bold"/>
+                        <TextBlock Text="This preview is a Microsoft Defender controller, not a separate antivirus engine. It does not install or replace Defender, provide its own real-time file-system driver, ransomware behavior engine, quarantine manager, or subscription service. Microsoft Defender must remain enabled and up to date. Windows 7 is not supported by this integration."
+                                   Foreground="#FFC5B995" FontSize="11" TextWrapping="Wrap" Margin="0,7,0,0"/>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
 </Window>
