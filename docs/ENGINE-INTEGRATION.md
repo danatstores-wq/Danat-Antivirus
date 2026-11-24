@@ -18,7 +18,7 @@ The UI also offers an explicit, unchecked consent option. If the user selects it
 
 ## Privileges
 
-Microsoft documents MpCmdRun usage from an elevated Command Prompt. The WPF app therefore declares `requireAdministrator`, causing Windows UAC to prompt at launch. This is an MVP tradeoff. **Security limitation:** ClamAV is currently launched as a child of this elevated process, so it inherits administrator privileges while parsing untrusted files. Before public release, move ClamAV scans into a separate unelevated helper process and verify its token is not elevated. The longer-term Defender architecture should also move privileged work into a narrowly scoped, signed Windows service instead of keeping the entire UI elevated.
+Microsoft documents MpCmdRun usage from an elevated Command Prompt. The WPF app manifest uses `asInvoker`, so Danat itself does not request administrator privileges. When the user starts a Defender scan, Danat launches only Microsoft's `MpCmdRun.exe` using the Windows `runas` verb; Windows displays a UAC prompt and elevates that process alone. ClamAV setup, signature updates, and scans run as children of the unelevated Danat UI and therefore do not inherit administrator privileges. Defender scan output is represented by the process exit code in Danat's log because ShellExecute elevation does not support redirected standard output.
 
 ## Result interpretation
 
