@@ -183,7 +183,7 @@ namespace DanatAntiVirus
             var info = new ProcessStartInfo
             {
                 FileName = scanner,
-                Arguments = "--database=" + QuoteArgument(database) + " --infected --recursive --no-summary --stdout " + QuoteArgument(target),
+                Arguments = "--database=" + QuoteArgument(database) + " --fail-if-cvd-older-than=7 --alert-exceeds-max=yes --alert-encrypted=yes --infected --recursive --no-summary --stdout " + QuoteArgument(target),
                 WorkingDirectory = Path.GetDirectoryName(scanner),
                 UseShellExecute = false,
                 CreateNoWindow = true,
