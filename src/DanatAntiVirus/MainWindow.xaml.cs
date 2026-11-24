@@ -798,6 +798,205 @@ namespace DanatAntiVirus
             }
         }
 
+
+        // Windows maintenance tools. Cleanup is restricted to the current user's TEMP
+        // directory and only removes files older than seven days; locked files are skipped.
+        private async void CleanTemp_Click(object sender, RoutedEventArgs e)
+        {
+            if (_scanRunning) return;
+            MessageBoxResult answer = MessageBox.Show(
+                "Danat will remove files older than seven days from your Windows user TEMP folder only. Files in use will be skipped. Personal folders, Downloads, browser profiles, and the Windows system directory will not be touched. Continue?",
+                "Clean temporary files", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            if (answer != MessageBoxResult.Yes) return;
+
+            SetMaintenanceBusy(true, "Cleaning old files in your user TEMP folder…");
+            try
+            {
+                var result = await Task.Run(() => CleanUserTempFiles());
+                MaintenanceStatusText.Text = "Cleanup finished. Deleted " + result.Item1 +
+                    " file(s); skipped " + result.Item2 + " file(s).";
+                AppendMaintenanceLog("User TEMP cleanup: " + result.Item1 + " deleted; " + result.Item2 + " skipped.");
+            }
+            catch (Exception ex)
+            {
+                MaintenanceStatusText.Text = "Cleanup could not be completed: " + ex.Message;
+                AppendMaintenanceLog(ex.ToString());
+            }
+            finally { SetMaintenanceBusy(false, null); }
+        }
+
+        private static Tuple<int, int> CleanUserTempFiles()
+        {
+            string temp = Path.GetFullPath(Path.GetTempPath());
+            string local = Path.GetFullPath(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData));
+            if (string.IsNullOrWhiteSpace(temp) || !temp.StartsWith(local, StringComparison.OrdinalIgnoreCase))
+                throw new InvalidOperationException("The resolved TEMP path is not inside this user's Local AppData folder.");
+            DateTime cutoff = DateTime.Now.AddDays(-7);
+            int deleted = 0, skipped = 0;
+            foreach (string file in Directory.GetFiles(temp, "*", SearchOption.AllDirectories))
+            {
+                try
+                {
+                    if (File.GetLastWriteTime(file) >= cutoff) continue;
+                    File.SetAttributes(file, FileAttributes.Normal);
+                    File.Delete(file);
+                    deleted++;
+                }
+                catch { skipped++; }
+            }
+            // Remove only empty directories under TEMP; never recursively delete a directory tree.
+            foreach (string directory in Directory.GetDirectories(temp, "*", SearchOption.AllDirectories)
+                .OrderByDescending(p => p.Length))
+            {
+                try { if (!Directory.EnumerateFileSystemEntries(directory).Any()) Directory.Delete(directory, false); }
+                catch { }
+            }
+            return Tuple.Create(deleted, skipped);
+        }
+
+        private async void FlushDns_Click(object sender, RoutedEventArgs e)
+        {
+            if (_scanRunning) return;
+            if (MessageBox.Show("This clears the Windows DNS resolver cache. It does not delete browsing history or saved passwords. Continue?",
+                "Flush DNS cache", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
+            SetMaintenanceBusy(true, "Flushing the Windows DNS cache…");
+            try
+            {
+                string output = await Task.Run(() => RunCapturedCommand("ipconfig.exe", "/flushdns", 30000));
+                AppendMaintenanceLog(output);
+                MaintenanceStatusText.Text = "DNS cache command completed. Review the result below.";
+            }
+            catch (Exception ex) { MaintenanceStatusText.Text = "DNS cache could not be flushed: " + ex.Message; }
+            finally { SetMaintenanceBusy(false, null); }
+        }
+
+        private async void CheckDisk_Click(object sender, RoutedEventArgs e)
+        {
+            if (_scanRunning) return;
+            if (MessageBox.Show("This runs the Windows online NTFS scan (chkdsk C: /scan). It checks the system drive without scheduling an offline repair. Continue?",
+                "Check system drive", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
+            SetMaintenanceBusy(true, "Starting the Windows online disk scan…");
+            try
+            {
+                await RunElevatedCommandAsync("chkdsk.exe", "C: /scan", 60 * 60 * 1000);
+                MaintenanceStatusText.Text = "Disk check process finished. Read the CHKDSK window for its findings.";
+                AppendMaintenanceLog("CHKDSK /scan finished. Review the visible Windows console for the detailed report.");
+            }
+            catch (Exception ex) { MaintenanceStatusText.Text = "Disk check could not be completed: " + ex.Message; }
+            finally { SetMaintenanceBusy(false, null); }
+        }
+
+        private async void RepairWindows_Click(object sender, RoutedEventArgs e)
+        {
+            if (_scanRunning) return;
+            if (MessageBox.Show("DISM /Online /Cleanup-Image /RestoreHealth repairs the Windows component store. It may take a long time and uses Windows Update when needed. Save your work first. Continue?",
+                "Repair Windows image", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
+            SetMaintenanceBusy(true, "DISM repair is starting. A Windows administrator approval prompt will appear…");
+            try
+            {
+                await RunElevatedCommandAsync("dism.exe", "/Online /Cleanup-Image /RestoreHealth", 90 * 60 * 1000);
+                MaintenanceStatusText.Text = "DISM process finished. Review its console output for the final result; restart Windows if DISM requests it.";
+                AppendMaintenanceLog("DISM /RestoreHealth process finished. Danat does not infer success without reviewing DISM's final console result.");
+            }
+            catch (Exception ex) { MaintenanceStatusText.Text = "DISM could not be completed: " + ex.Message; }
+            finally { SetMaintenanceBusy(false, null); }
+        }
+
+        private async void RepairSystemFiles_Click(object sender, RoutedEventArgs e)
+        {
+            if (_scanRunning) return;
+            if (MessageBox.Show("SFC /scannow checks protected Windows system files and repairs corruption when possible. It may take several minutes. Save your work first. Continue?",
+                "Repair Windows system files", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
+            SetMaintenanceBusy(true, "System File Checker is starting. A Windows administrator approval prompt will appear…");
+            try
+            {
+                await RunElevatedCommandAsync("sfc.exe", "/scannow", 60 * 60 * 1000);
+                MaintenanceStatusText.Text = "SFC process finished. Review its console output for whether corruption was found and repaired.";
+                AppendMaintenanceLog("SFC /scannow process finished. Review the visible Windows console for the detailed result.");
+            }
+            catch (Exception ex) { MaintenanceStatusText.Text = "System File Checker could not be completed: " + ex.Message; }
+            finally { SetMaintenanceBusy(false, null); }
+        }
+
+        private static string RunCapturedCommand(string executable, string arguments, int timeoutMs)
+        {
+            var info = new ProcessStartInfo
+            {
+                FileName = executable, Arguments = arguments, UseShellExecute = false,
+                CreateNoWindow = true, RedirectStandardOutput = true, RedirectStandardError = true
+            };
+            using (var process = Process.Start(info))
+            {
+                if (process == null) throw new InvalidOperationException("Windows could not start " + executable + ".");
+                Task<string> stdout = process.StandardOutput.ReadToEndAsync();
+                Task<string> stderr = process.StandardError.ReadToEndAsync();
+                if (!process.WaitForExit(timeoutMs))
+                {
+                    try { process.Kill(); } catch { }
+                    throw new TimeoutException(executable + " exceeded its time limit.");
+                }
+                Task.WaitAll(stdout, stderr);
+                string output = (stdout.Result + Environment.NewLine + stderr.Result).Trim();
+                if (process.ExitCode != 0)
+                    throw new InvalidOperationException(string.IsNullOrWhiteSpace(output) ? executable + " returned exit code " + process.ExitCode : output);
+                return string.IsNullOrWhiteSpace(output) ? executable + " completed successfully." : output;
+            }
+        }
+
+        private async Task RunElevatedCommandAsync(string executable, string arguments, int timeoutMs)
+        {
+            await Task.Run(() =>
+            {
+                var info = new ProcessStartInfo
+                {
+                    FileName = executable, Arguments = arguments, UseShellExecute = true,
+                    Verb = "runas", CreateNoWindow = false
+                };
+                using (var process = Process.Start(info))
+                {
+                    if (process == null) throw new InvalidOperationException("Windows did not start " + executable + ".");
+                    if (!process.WaitForExit(timeoutMs))
+                    {
+                        try { process.Kill(); } catch { }
+                        throw new TimeoutException(executable + " exceeded its time limit. Treat the operation as incomplete.");
+                    }
+                    if (process.ExitCode != 0)
+                        throw new InvalidOperationException(executable + " returned exit code " + process.ExitCode + ". Review its console output.");
+                }
+            });
+        }
+
+        private void SetMaintenanceBusy(bool busy, string message)
+        {
+            foreach (var button in new System.Windows.Controls.Button[]
+            {
+                (System.Windows.Controls.Button)FindName("CleanTempButton")
+            }.Where(b => b != null)) button.IsEnabled = !busy;
+            if (busy && !string.IsNullOrWhiteSpace(message)) MaintenanceStatusText.Text = message;
+        }
+
+        private void AppendMaintenanceLog(string line)
+        {
+            MaintenanceLogBox.AppendText(line + Environment.NewLine);
+            MaintenanceLogBox.ScrollToEnd();
+        }
+
+        private void OpenStorageSettings_Click(object sender, RoutedEventArgs e) { OpenSettingsPage("ms-settings:storagesense"); }
+        private void OpenStartupSettings_Click(object sender, RoutedEventArgs e) { OpenSettingsPage("ms-settings:startupapps"); }
+        private void OpenNetworkSettings_Click(object sender, RoutedEventArgs e) { OpenSettingsPage("ms-settings:network-status"); }
+
+        private void OpenDriveOptimization_Click(object sender, RoutedEventArgs e)
+        {
+            try { Process.Start(new ProcessStartInfo { FileName = "dfrgui.exe", UseShellExecute = true }); }
+            catch (Exception ex) { MaintenanceStatusText.Text = "Could not open Drive Optimization: " + ex.Message; }
+        }
+
+        private void OpenSettingsPage(string uri)
+        {
+            try { Process.Start(new ProcessStartInfo { FileName = uri, UseShellExecute = true }); }
+            catch (Exception ex) { MaintenanceStatusText.Text = "Could not open Windows Settings: " + ex.Message; }
+        }
+
         private static string QuoteArgument(string value)
         {
             var result = new StringBuilder("\"");
