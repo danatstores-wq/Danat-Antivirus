@@ -839,7 +839,6 @@ namespace DanatAntiVirus
                 try
                 {
                     if (File.GetLastWriteTime(file) >= cutoff) continue;
-                    File.SetAttributes(file, FileAttributes.Normal);
                     File.Delete(file);
                     deleted++;
                 }
@@ -870,7 +869,7 @@ namespace DanatAntiVirus
                     int deleted = 0, skipped = 0;
                     foreach (string file in Directory.GetFiles(folder, "thumbcache_*.db", SearchOption.TopDirectoryOnly))
                     {
-                        try { File.SetAttributes(file, FileAttributes.Normal); File.Delete(file); deleted++; }
+                        try { File.Delete(file); deleted++; }
                         catch { skipped++; }
                     }
                     return Tuple.Create(deleted, skipped);
@@ -891,9 +890,9 @@ namespace DanatAntiVirus
             SetMaintenanceBusy(true, "Flushing the Windows DNS cache…");
             try
             {
-                string output = await Task.Run(() => RunCapturedCommand("ipconfig.exe", "/flushdns", 30000));
-                AppendMaintenanceLog(output);
-                MaintenanceStatusText.Text = "DNS cache command completed. Review the result below.";
+                await RunElevatedCommandAsync("ipconfig.exe", "/flushdns", 30000);
+                AppendMaintenanceLog("ipconfig /flushdns process finished. Review the visible Windows console for its confirmation.");
+                MaintenanceStatusText.Text = "DNS cache command finished. Review the Windows console for confirmation.";
             }
             catch (Exception ex) { MaintenanceStatusText.Text = "DNS cache could not be flushed: " + ex.Message; }
             finally { SetMaintenanceBusy(false, null); }
