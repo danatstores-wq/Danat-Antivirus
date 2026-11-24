@@ -17,11 +17,25 @@
     <StackPanel VerticalAlignment="Center"><TextBlock Text="DANAT ANTI-VIRUS" Foreground="#FFFFD56A" FontSize="13" FontWeight="Bold"/><TextBlock Text="Protection setup in progress" FontSize="25" FontWeight="SemiBold" Margin="0,8"/><TextBlock Text="The desktop interface is ready for security-engine integration. Real-time protection is not active in this preview." Foreground="#FFC5B995" FontSize="13" TextWrapping="Wrap" MaxWidth="560"/><TextBlock Text="STATUS: NOT PROTECTED — ENGINE NOT INSTALLED" Foreground="#FFFFC65C" FontSize="11" FontWeight="Bold" Margin="0,16,0,0"/></StackPanel>
     <Border Grid.Column="1" Width="174" Height="174" CornerRadius="87" BorderBrush="#FFD6A62E" BorderThickness="3" Background="#FF0C0B08" HorizontalAlignment="Center" VerticalAlignment="Center"><Grid><Ellipse Margin="9" Stroke="#FF5E471B" StrokeThickness="1"/><TextBlock Text="D" FontSize="114" FontWeight="Bold" Foreground="#FFFFD56A" HorizontalAlignment="Center" VerticalAlignment="Center"/></Grid></Border>
    </Grid></Border>
-   <TextBlock Text="QUICK ACTIONS" Foreground="#FFD6A62E" FontWeight="Bold" FontSize="12" Margin="0,10,0,12"/>
-   <UniformGrid Columns="2" Rows="1">
-    <Border Background="#FF171717" BorderBrush="#FF37302A" BorderThickness="1" CornerRadius="12" Padding="18" Margin="0,0,9,0"><StackPanel><TextBlock Text="⌕" FontSize="30" Foreground="#FFFFD56A"/><TextBlock Text="Quick Scan" FontSize="18" FontWeight="SemiBold" Margin="0,6,0,4"/><TextBlock Text="Scanning engine is not installed yet." Foreground="#FFAAA08A" FontSize="12" TextWrapping="Wrap"/><Button Content="SCAN NOT AVAILABLE" IsEnabled="False" Margin="0,15,0,0" Padding="12,8" Background="#FF34302A" Foreground="#FFAAA08A" BorderThickness="0"/></StackPanel></Border>
-    <Border Background="#FF171717" BorderBrush="#FF37302A" BorderThickness="1" CornerRadius="12" Padding="18" Margin="9,0,0,0"><StackPanel><TextBlock Text="◈" FontSize="30" Foreground="#FFFFD56A"/><TextBlock Text="Real-time Protection" FontSize="18" FontWeight="SemiBold" Margin="0,6,0,4"/><TextBlock Text="File monitoring will be enabled only after engine integration and testing." Foreground="#FFAAA08A" FontSize="12" TextWrapping="Wrap"/><TextBlock Text="NOT ACTIVE" Foreground="#FFFFC65C" FontSize="12" FontWeight="Bold" Margin="0,17,0,0"/></StackPanel></Border>
-   </UniformGrid>
+   <TextBlock Text="MANUAL MALWARE SCAN" Foreground="#FFD6A62E" FontWeight="Bold" FontSize="12" Margin="0,10,0,12"/>
+   <Border Background="#FF171717" BorderBrush="#FF72551C" BorderThickness="1" CornerRadius="12" Padding="18">
+    <StackPanel>
+     <TextBlock Text="Use an existing ClamAV installation" FontSize="18" FontWeight="SemiBold"/>
+     <TextBlock Text="Danat Anti-Virus can launch a manually installed ClamAV scanner. It will not download or install an engine for you. This is on-demand scanning only—not real-time or ransomware protection." Foreground="#FFC5B995" FontSize="12" TextWrapping="Wrap" Margin="0,5,0,14"/>
+     <TextBlock Text="ClamAV scanner (clamscan.exe)" Foreground="#FFE9D49A" FontSize="12" FontWeight="Bold"/>
+     <DockPanel Margin="0,5,0,12"><TextBox x:Name="ScannerPathBox" IsReadOnly="True" Background="#FF0D0D0D" Foreground="#FFE8DDBB" BorderBrush="#FF514326" Padding="8"/><Button Content="Browse…" Click="BrowseScanner_Click" Margin="8,0,0,0" Padding="12,6" Background="#FF3A2D12" Foreground="#FFFFD56A" BorderBrush="#FF72551C"/></DockPanel>
+     <TextBlock Text="ClamAV signature database folder" Foreground="#FFE9D49A" FontSize="12" FontWeight="Bold"/>
+     <DockPanel Margin="0,5,0,12"><TextBox x:Name="DatabasePathBox" IsReadOnly="True" Background="#FF0D0D0D" Foreground="#FFE8DDBB" BorderBrush="#FF514326" Padding="8"/><Button Content="Browse…" Click="BrowseDatabase_Click" Margin="8,0,0,0" Padding="12,6" Background="#FF3A2D12" Foreground="#FFFFD56A" BorderBrush="#FF72551C"/></DockPanel>
+     <DockPanel Margin="0,0,0,14"><TextBlock Text="Folder to scan" Foreground="#FFE9D49A" FontSize="12" FontWeight="Bold" VerticalAlignment="Center"/><Button Content="Choose folder…" Click="ChooseFolder_Click" DockPanel.Dock="Right" Padding="12,6" Background="#FF3A2D12" Foreground="#FFFFD56A" BorderBrush="#FF72551C"/></DockPanel>
+     <TextBlock x:Name="TargetFolderText" Text="No scan folder selected." Foreground="#FFAAA08A" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,12"/>
+     <StackPanel Orientation="Horizontal">
+      <Button x:Name="StartScanButton" Content="START SCAN" Click="StartScan_Click" Padding="18,10" Background="#FFD6A62E" Foreground="#FF17120A" BorderBrush="#FFFFD56A" FontWeight="Bold"/>
+      <Button x:Name="CancelScanButton" Content="CANCEL" Click="CancelScan_Click" IsEnabled="False" Margin="10,0,0,0" Padding="18,10" Background="#FF302820" Foreground="#FFE9D49A" BorderBrush="#FF72551C"/>
+     </StackPanel>
+     <TextBlock x:Name="ScanStatusText" Text="Scanner not configured. No protection is active." Foreground="#FFFFC65C" FontSize="12" FontWeight="Bold" TextWrapping="Wrap" Margin="0,14,0,8"/>
+     <TextBox x:Name="ScanLogBox" Height="125" IsReadOnly="True" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" TextWrapping="Wrap" Background="#FF0D0D0D" Foreground="#FFE8DDBB" BorderBrush="#FF37302A" Padding="8"/>
+    </StackPanel>
+   </Border>
    <Border Background="#FF171717" BorderBrush="#FF37302A" BorderThickness="1" CornerRadius="12" Padding="18" Margin="0,18,0,0"><StackPanel><TextBlock Text="DEVELOPMENT STATUS" Foreground="#FFD6A62E" FontSize="12" FontWeight="Bold"/><TextBlock Text="Desktop shell created. Detection engine, quarantine, security updates, ransomware monitoring, and licensing are pending." Foreground="#FFC5B995" TextWrapping="Wrap" Margin="0,9,0,0"/></StackPanel></Border>
   </StackPanel></ScrollViewer>
  </Grid>
