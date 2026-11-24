@@ -177,6 +177,8 @@
                         <UniformGrid Columns="3">
                             <Button Content="CLEAN USER TEMP FILES" Click="CleanTemp_Click"
                                     Style="{StaticResource GoldButton}" Margin="3"/>
+                            <Button Content="CLEAR THUMBNAIL CACHE" Click="ClearThumbnailCache_Click"
+                                    Style="{StaticResource DarkButton}" Margin="3"/>
                             <Button Content="FLUSH DNS CACHE" Click="FlushDns_Click"
                                     Style="{StaticResource DarkButton}" Margin="3"/>
                             <Button Content="CHECK DISK (ONLINE)" Click="CheckDisk_Click"
