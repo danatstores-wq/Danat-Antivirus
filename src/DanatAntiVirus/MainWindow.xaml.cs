@@ -806,21 +806,21 @@ namespace DanatAntiVirus
         {
             if (_scanRunning) return;
             MessageBoxResult answer = MessageBox.Show(
-                "Danat will remove files older than seven days from your Windows user TEMP folder only. Files in use will be skipped. Personal folders, Downloads, browser profiles, and the Windows system directory will not be touched. Continue?",
-                "Clean temporary files", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                "سيحذف دانات الملفات التي مرّ على تعديلها أكثر من 7 أيام من مجلد الملفات المؤقتة الخاص بحسابك فقط. سيتم تخطي الملفات قيد الاستخدام. لن يتم المساس بالمجلدات الشخصية أو التنزيلات أو ملفات المتصفح أو مجلدات ويندوز. هل تريد المتابعة؟",
+                "تنظيف الملفات المؤقتة | Clean temporary files", MessageBoxButton.YesNo, MessageBoxImage.Warning);
             if (answer != MessageBoxResult.Yes) return;
 
-            SetMaintenanceBusy(true, "Cleaning old files in your user TEMP folder…");
+            SetMaintenanceBusy(true, "جارٍ تنظيف الملفات القديمة من مجلد الملفات المؤقتة… | Cleaning user temporary files…");
             try
             {
                 var result = await Task.Run(() => CleanUserTempFiles());
-                MaintenanceStatusText.Text = "Cleanup finished. Deleted " + result.Item1 +
+                MaintenanceStatusText.Text = "اكتمل التنظيف. الملفات المحذوفة: " + result.Item1 +
                     " file(s); skipped " + result.Item2 + " file(s).";
-                AppendMaintenanceLog("User TEMP cleanup: " + result.Item1 + " deleted; " + result.Item2 + " skipped.");
+                AppendMaintenanceLog("تنظيف الملفات المؤقتة: " + result.Item1 + " deleted; " + result.Item2 + " skipped.");
             }
             catch (Exception ex)
             {
-                MaintenanceStatusText.Text = "Cleanup could not be completed: " + ex.Message;
+                MaintenanceStatusText.Text = "تعذّر إكمال التنظيف: " + ex.Message;
                 AppendMaintenanceLog(ex.ToString());
             }
             finally { SetMaintenanceBusy(false, null); }
@@ -889,9 +889,9 @@ namespace DanatAntiVirus
         private async void ClearThumbnailCache_Click(object sender, RoutedEventArgs e)
         {
             if (_scanRunning || _maintenanceRunning) return;
-            if (MessageBox.Show("This removes Windows thumbnail-cache database files for the current user only. Windows will rebuild thumbnails as needed. Files currently in use will be skipped. Continue?",
-                "Clear thumbnail cache", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
-            SetMaintenanceBusy(true, "Clearing the current user's Windows thumbnail cache…");
+            if (MessageBox.Show("سيحذف هذا الإجراء ملفات قاعدة بيانات الصور المصغّرة لحسابك الحالي فقط. سيعيد ويندوز إنشاءها عند الحاجة، وسيتم تخطي الملفات قيد الاستخدام. هل تريد المتابعة؟",
+                "مسح ذاكرة الصور المصغّرة | Clear thumbnail cache", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
+            SetMaintenanceBusy(true, "جارٍ مسح ذاكرة الصور المصغّرة الخاصة بحسابك… | Clearing thumbnail cache…");
             try
             {
                 var result = await Task.Run(() =>
@@ -907,9 +907,9 @@ namespace DanatAntiVirus
                     }
                     return Tuple.Create(deleted, skipped);
                 });
-                MaintenanceStatusText.Text = "Thumbnail cache cleanup finished. Deleted " + result.Item1 +
+                MaintenanceStatusText.Text = "اكتمل مسح ذاكرة الصور المصغّرة. الملفات المحذوفة: " + result.Item1 +
                     " file(s); skipped " + result.Item2 + " file(s). Windows will rebuild thumbnails.";
-                AppendMaintenanceLog("Thumbnail cache: " + result.Item1 + " deleted; " + result.Item2 + " skipped.");
+                AppendMaintenanceLog("ذاكرة الصور المصغّرة: " + result.Item1 + " deleted; " + result.Item2 + " skipped.");
             }
             catch (Exception ex) { MaintenanceStatusText.Text = "Thumbnail cache could not be cleared: " + ex.Message; }
             finally { SetMaintenanceBusy(false, null); }
@@ -918,47 +918,47 @@ namespace DanatAntiVirus
         private async void FlushDns_Click(object sender, RoutedEventArgs e)
         {
             if (_scanRunning) return;
-            if (MessageBox.Show("This clears the Windows DNS resolver cache. It does not delete browsing history or saved passwords. Continue?",
-                "Flush DNS cache", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
-            SetMaintenanceBusy(true, "Flushing the Windows DNS cache…");
+            if (MessageBox.Show("سيؤدي هذا إلى مسح ذاكرة DNS المؤقتة في ويندوز. لن يحذف سجل التصفح أو كلمات المرور المحفوظة. هل تريد المتابعة؟",
+                "مسح ذاكرة DNS | Flush DNS cache", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
+            SetMaintenanceBusy(true, "جارٍ مسح ذاكرة DNS في ويندوز… | Flushing DNS cache…");
             try
             {
                 await RunElevatedCommandAsync("ipconfig.exe", "/flushdns", 30000);
-                AppendMaintenanceLog("ipconfig /flushdns process finished. Review the visible Windows console for its confirmation.");
-                MaintenanceStatusText.Text = "DNS cache command finished. Review the Windows console for confirmation.";
+                AppendMaintenanceLog("انتهى أمر ipconfig /flushdns. راجع نافذة ويندوز الظاهرة للتأكد من النتيجة. | Command finished; review the Windows console.");
+                MaintenanceStatusText.Text = "انتهى أمر مسح DNS. راجع نافذة ويندوز للتأكد. | DNS command finished; check the Windows console.";
             }
-            catch (Exception ex) { MaintenanceStatusText.Text = "DNS cache could not be flushed: " + ex.Message; }
+            catch (Exception ex) { MaintenanceStatusText.Text = "تعذّر مسح ذاكرة DNS: " + ex.Message; }
             finally { SetMaintenanceBusy(false, null); }
         }
 
         private async void CheckDisk_Click(object sender, RoutedEventArgs e)
         {
             if (_scanRunning) return;
-            if (MessageBox.Show("This runs the Windows online NTFS scan (chkdsk on the Windows system drive with /scan). It checks the system drive without scheduling an offline repair. Continue?",
-                "Check system drive", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
-            SetMaintenanceBusy(true, "Starting the Windows online disk scan…");
+            if (MessageBox.Show("سيشغّل هذا فحص NTFS عبر الإنترنت على قرص ويندوز باستخدام CHKDSK /scan، دون جدولة إصلاح خارج النظام. هل تريد المتابعة؟",
+                "فحص قرص النظام | Check system drive", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
+            SetMaintenanceBusy(true, "جارٍ بدء فحص القرص عبر ويندوز… | Starting online disk scan…");
             try
             {
                 string systemDrive = Path.GetPathRoot(Environment.SystemDirectory);
                 await RunElevatedCommandAsync("chkdsk.exe", systemDrive.TrimEnd(Path.DirectorySeparatorChar) + " /scan", 60 * 60 * 1000);
-                MaintenanceStatusText.Text = "Disk check process finished. Read the CHKDSK window for its findings.";
-                AppendMaintenanceLog("CHKDSK /scan finished. Review the visible Windows console for the detailed report.");
+                MaintenanceStatusText.Text = "انتهى فحص القرص. اقرأ نافذة CHKDSK للاطلاع على النتائج. | Disk check finished; review CHKDSK output.";
+                AppendMaintenanceLog("انتهى CHKDSK /scan. راجع نافذة ويندوز للاطلاع على التقرير التفصيلي. | Review the Windows console for details.");
             }
-            catch (Exception ex) { MaintenanceStatusText.Text = "Disk check could not be completed: " + ex.Message; }
+            catch (Exception ex) { MaintenanceStatusText.Text = "تعذّر إكمال فحص القرص: " + ex.Message; }
             finally { SetMaintenanceBusy(false, null); }
         }
 
         private async void RepairWindows_Click(object sender, RoutedEventArgs e)
         {
             if (_scanRunning) return;
-            if (MessageBox.Show("DISM /Online /Cleanup-Image /RestoreHealth repairs the Windows component store. It may take a long time and uses Windows Update when needed. Save your work first. Continue?",
-                "Repair Windows image", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
-            SetMaintenanceBusy(true, "DISM repair is starting. A Windows administrator approval prompt will appear…");
+            if (MessageBox.Show("يعمل الأمر DISM /Online /Cleanup-Image /RestoreHealth على إصلاح مكونات ويندوز. قد يستغرق وقتاً طويلاً وقد يستخدم Windows Update عند الحاجة. احفظ عملك أولاً. هل تريد المتابعة؟",
+                "إصلاح صورة ويندوز | Repair Windows image", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
+            SetMaintenanceBusy(true, "جارٍ بدء إصلاح DISM. ستظهر مطالبة ويندوز للحصول على موافقة المسؤول… | DISM starting; administrator approval required…");
             try
             {
                 await RunElevatedCommandAsync("dism.exe", "/Online /Cleanup-Image /RestoreHealth", 90 * 60 * 1000);
-                MaintenanceStatusText.Text = "DISM process finished. Review its console output for the final result; restart Windows if DISM requests it.";
-                AppendMaintenanceLog("DISM /RestoreHealth process finished. Danat does not infer success without reviewing DISM's final console result.");
+                MaintenanceStatusText.Text = "انتهى DISM. راجع نافذة الأوامر لمعرفة النتيجة النهائية، وأعد تشغيل ويندوز إذا طلب ذلك. | Review DISM output; restart if requested.";
+                AppendMaintenanceLog("انتهى أمر DISM /RestoreHealth. لا يعتبر دانات الإصلاح ناجحاً قبل مراجعة النتيجة النهائية. | Review DISM final output to confirm.");
             }
             catch (Exception ex) { MaintenanceStatusText.Text = "DISM could not be completed: " + ex.Message; }
             finally { SetMaintenanceBusy(false, null); }
@@ -967,16 +967,16 @@ namespace DanatAntiVirus
         private async void RepairSystemFiles_Click(object sender, RoutedEventArgs e)
         {
             if (_scanRunning) return;
-            if (MessageBox.Show("SFC /scannow checks protected Windows system files and repairs corruption when possible. It may take several minutes. Save your work first. Continue?",
-                "Repair Windows system files", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
-            SetMaintenanceBusy(true, "System File Checker is starting. A Windows administrator approval prompt will appear…");
+            if (MessageBox.Show("يفحص الأمر SFC /scannow ملفات نظام ويندوز المحمية ويصلح الملفات التالفة إن أمكن. قد يستغرق عدة دقائق. احفظ عملك أولاً. هل تريد المتابعة؟",
+                "إصلاح ملفات نظام ويندوز | Repair system files", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
+            SetMaintenanceBusy(true, "جارٍ تشغيل مدقق ملفات النظام. ستظهر مطالبة ويندوز للحصول على موافقة المسؤول… | SFC starting; administrator approval required…");
             try
             {
                 await RunElevatedCommandAsync("sfc.exe", "/scannow", 60 * 60 * 1000);
-                MaintenanceStatusText.Text = "SFC process finished. Review its console output for whether corruption was found and repaired.";
-                AppendMaintenanceLog("SFC /scannow process finished. Review the visible Windows console for the detailed result.");
+                MaintenanceStatusText.Text = "انتهى SFC. راجع نافذة الأوامر لمعرفة ما إذا تم العثور على تلف وإصلاحه. | Review SFC output for findings.";
+                AppendMaintenanceLog("انتهى SFC /scannow. راجع نافذة ويندوز للاطلاع على النتيجة التفصيلية. | Review the Windows console for details.");
             }
-            catch (Exception ex) { MaintenanceStatusText.Text = "System File Checker could not be completed: " + ex.Message; }
+            catch (Exception ex) { MaintenanceStatusText.Text = "تعذّر إكمال فحص وإصلاح ملفات النظام: " + ex.Message; }
             finally { SetMaintenanceBusy(false, null); }
         }
 
@@ -1059,13 +1059,13 @@ namespace DanatAntiVirus
         private void OpenDriveOptimization_Click(object sender, RoutedEventArgs e)
         {
             try { Process.Start(new ProcessStartInfo { FileName = "dfrgui.exe", UseShellExecute = true }); }
-            catch (Exception ex) { MaintenanceStatusText.Text = "Could not open Drive Optimization: " + ex.Message; }
+            catch (Exception ex) { MaintenanceStatusText.Text = "تعذّر فتح تحسين محركات الأقراص: " + ex.Message; }
         }
 
         private void OpenSettingsPage(string uri)
         {
             try { Process.Start(new ProcessStartInfo { FileName = uri, UseShellExecute = true }); }
-            catch (Exception ex) { MaintenanceStatusText.Text = "Could not open Windows Settings: " + ex.Message; }
+            catch (Exception ex) { MaintenanceStatusText.Text = "تعذّر فتح إعدادات ويندوز: " + ex.Message; }
         }
 
         private static string QuoteArgument(string value)
