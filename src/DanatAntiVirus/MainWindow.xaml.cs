@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Globalization;
+using System.Text.RegularExpressions;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -243,6 +244,48 @@ namespace DanatAntiVirus
             }
         }
 
+        private static Version GetClamAVVersion(string scanner)
+        {
+            var info = new ProcessStartInfo
+            {
+                FileName = scanner,
+                Arguments = "--version",
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
+            };
+
+            using (var process = Process.Start(info))
+            {
+                if (process == null)
+                    throw new InvalidOperationException("Windows could not start ClamAV to check its version.");
+                Task<string> outputTask = process.StandardOutput.ReadToEndAsync();
+                Task<string> errorTask = process.StandardError.ReadToEndAsync();
+                if (!process.WaitForExit(10000))
+                {
+                    try { process.Kill(); } catch { }
+                    throw new TimeoutException("ClamAV version check timed out.");
+                }
+                Task.WaitAll(outputTask, errorTask);
+                if (process.ExitCode != 0)
+                    throw new InvalidOperationException("ClamAV version check failed: " + errorTask.Result.Trim());
+                Match match = Regex.Match(outputTask.Result, @"ClamAV\\s+(\\d+\\.\\d+\\.\\d+)", RegexOptions.IgnoreCase);
+                Version version;
+                if (!match.Success || !Version.TryParse(match.Groups[1].Value, out version))
+                    throw new InvalidOperationException("Danat could not verify the installed ClamAV version.");
+                return version;
+            }
+        }
+
+        private static void RequireSecureClamAVVersion(string scanner)
+        {
+            Version installed = GetClamAVVersion(scanner);
+            Version minimum = new Version(1, 5, 5);
+            if (installed < minimum)
+                throw new InvalidOperationException("ClamAV " + installed + " is too old for this Danat preview. Version 1.5.5 or later is required because it includes fixes for security vulnerabilities affecting earlier releases. Select UPDATE CLAMAV before scanning.");
+        }
+
         private static string FindClamScan()
         {
             string pathValue = Environment.GetEnvironmentVariable("PATH") ?? string.Empty;
@@ -453,6 +496,7 @@ namespace DanatAntiVirus
                 if (scanner == null)
                     throw new InvalidOperationException("WinGet completed, but Danat could not locate clamscan.exe.");
 
+                RequireSecureClamAVVersion(scanner);
                 string freshclam = Path.Combine(Path.GetDirectoryName(scanner), "freshclam.exe");
                 if (!File.Exists(freshclam))
                     throw new FileNotFoundException("The ClamAV installation did not include freshclam.exe.", freshclam);
@@ -492,6 +536,15 @@ namespace DanatAntiVirus
             if (scanner == null)
             {
                 SetScanStatus("ClamAV is not set up yet. Use the SET UP CLAMAV button; Danat will handle installation and signature configuration.", true);
+                return;
+            }
+            try
+            {
+                RequireSecureClamAVVersion(scanner);
+            }
+            catch (Exception ex)
+            {
+                SetScanStatus("ClamAV version check failed: " + ex.Message, true);
                 return;
             }
             string freshclam = Path.Combine(Path.GetDirectoryName(scanner), "freshclam.exe");
