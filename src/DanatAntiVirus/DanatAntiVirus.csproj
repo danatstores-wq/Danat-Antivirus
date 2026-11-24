@@ -18,7 +18,7 @@
     <Reference Include="System.Xaml"/>
     <Reference Include="WindowsBase"/>
     <Reference Include="PresentationCore"/>
-    <Reference Include="PresentationFramework"/>
+    <Reference Include="PresentationFramework"/><Reference Include="System.Windows.Forms"/>
   </ItemGroup>
   <ItemGroup>
     <ApplicationDefinition Include="App.xaml">
