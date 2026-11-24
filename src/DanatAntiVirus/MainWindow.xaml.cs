@@ -186,7 +186,7 @@ namespace DanatAntiVirus
             {
                 int exitCode = await RunDefenderScanAsync(scanner, _scanTarget);
                 if (exitCode == 0)
-                    SetScanStatus("Defender completed the custom scan (exit code 0). Review Windows Security → Protection history. No scan can guarantee that a device is malware-free.", false);
+                    SetScanStatus("Defender completed the custom scan (exit code 0). Review the scan output above. No scan can guarantee that a device is malware-free.", false);
                 else if (exitCode == 2)
                     SetScanStatus("Defender returned exit code 2: malware may remain unremediated, or a scan error occurred. Treat this result as unresolved and check the log and Protection history.", true);
                 else
