@@ -15,6 +15,7 @@ namespace DanatAntiVirus
     {
         private string _scanTarget;
         private bool _scanRunning;
+        private bool _maintenanceRunning;
 
         public MainWindow()
         {
@@ -188,7 +189,7 @@ namespace DanatAntiVirus
 
         private async void StartScan_Click(object sender, RoutedEventArgs e)
         {
-            if (_scanRunning) return;
+            if (_scanRunning || _maintenanceRunning) return;
             if (string.IsNullOrWhiteSpace(_scanTarget) || !Directory.Exists(_scanTarget) && !File.Exists(_scanTarget))
             {
                 SetScanStatus("Choose an existing file or folder first.", true);
@@ -796,6 +797,275 @@ namespace DanatAntiVirus
             {
                 SetScanStatus("Could not open Windows Security Protection history: " + ex.Message, true);
             }
+        }
+
+
+        // Windows maintenance tools. Cleanup is restricted to the current user's TEMP
+        // directory and only removes files older than seven days; locked files are skipped.
+        private async void CleanTemp_Click(object sender, RoutedEventArgs e)
+        {
+            if (_scanRunning) return;
+            MessageBoxResult answer = MessageBox.Show(
+                "سيحذف دانات الملفات التي مرّ على تعديلها أكثر من 7 أيام من مجلد الملفات المؤقتة الخاص بحسابك فقط. سيتم تخطي الملفات قيد الاستخدام. لن يتم المساس بالمجلدات الشخصية أو التنزيلات أو ملفات المتصفح أو مجلدات ويندوز. هل تريد المتابعة؟",
+                "تنظيف الملفات المؤقتة | Clean temporary files", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            if (answer != MessageBoxResult.Yes) return;
+
+            SetMaintenanceBusy(true, "جارٍ تنظيف الملفات القديمة من مجلد الملفات المؤقتة… | Cleaning user temporary files…");
+            try
+            {
+                var result = await Task.Run(() => CleanUserTempFiles());
+                MaintenanceStatusText.Text = "اكتمل التنظيف. الملفات المحذوفة: " + result.Item1 +
+                    " ملف / files; تم تخطي " + result.Item2 + " ملف / files.";
+                AppendMaintenanceLog("تنظيف الملفات المؤقتة: " + result.Item1 + " محذوف / deleted; " + result.Item2 + " تم تخطيه / skipped.");
+            }
+            catch (Exception ex)
+            {
+                MaintenanceStatusText.Text = "تعذّر إكمال التنظيف: " + ex.Message;
+                AppendMaintenanceLog(ex.ToString());
+            }
+            finally { SetMaintenanceBusy(false, null); }
+        }
+
+        private static Tuple<int, int> CleanUserTempFiles()
+        {
+            string temp = Path.GetFullPath(Path.GetTempPath());
+            string local = Path.GetFullPath(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData));
+            if (string.IsNullOrWhiteSpace(temp) || !temp.StartsWith(local.TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+                throw new InvalidOperationException("The resolved TEMP path is not inside this user's Local AppData folder.");
+            if (!Directory.Exists(temp)) return Tuple.Create(0, 0);
+
+            DateTime cutoff = DateTime.Now.AddDays(-7);
+            int deleted = 0, skipped = 0;
+            var pending = new System.Collections.Generic.Stack<string>();
+            var visited = new System.Collections.Generic.List<string>();
+            pending.Push(temp);
+
+            // Walk only inside TEMP and never follow junctions or symbolic links.
+            while (pending.Count > 0)
+            {
+                string current = pending.Pop();
+                visited.Add(current);
+                try
+                {
+                    foreach (string file in Directory.GetFiles(current, "*", SearchOption.TopDirectoryOnly))
+                    {
+                        try
+                        {
+                            if ((File.GetAttributes(file) & FileAttributes.ReparsePoint) != 0) { skipped++; continue; }
+                            if (File.GetLastWriteTime(file) >= cutoff) continue;
+                            File.Delete(file);
+                            deleted++;
+                        }
+                        catch { skipped++; }
+                    }
+
+                    foreach (string directory in Directory.GetDirectories(current, "*", SearchOption.TopDirectoryOnly))
+                    {
+                        try
+                        {
+                            if ((File.GetAttributes(directory) & FileAttributes.ReparsePoint) == 0)
+                                pending.Push(directory);
+                        }
+                        catch { skipped++; }
+                    }
+                }
+                catch { skipped++; }
+            }
+
+            // Remove directories only when empty; never recursively delete a directory tree.
+            foreach (string directory in visited.OrderByDescending(p => p.Length))
+            {
+                if (string.Equals(directory, temp, StringComparison.OrdinalIgnoreCase)) continue;
+                try
+                {
+                    if (!Directory.EnumerateFileSystemEntries(directory).Any())
+                        Directory.Delete(directory, false);
+                }
+                catch { }
+            }
+            return Tuple.Create(deleted, skipped);
+        }
+
+        private async void ClearThumbnailCache_Click(object sender, RoutedEventArgs e)
+        {
+            if (_scanRunning || _maintenanceRunning) return;
+            if (MessageBox.Show("سيحذف هذا الإجراء ملفات قاعدة بيانات الصور المصغّرة لحسابك الحالي فقط. سيعيد ويندوز إنشاءها عند الحاجة، وسيتم تخطي الملفات قيد الاستخدام. هل تريد المتابعة؟",
+                "مسح ذاكرة الصور المصغّرة | Clear thumbnail cache", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
+            SetMaintenanceBusy(true, "جارٍ مسح ذاكرة الصور المصغّرة الخاصة بحسابك… | Clearing thumbnail cache…");
+            try
+            {
+                var result = await Task.Run(() =>
+                {
+                    string folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                        "Microsoft", "Windows", "Explorer");
+                    if (!Directory.Exists(folder)) return Tuple.Create(0, 0);
+                    int deleted = 0, skipped = 0;
+                    foreach (string file in Directory.GetFiles(folder, "thumbcache_*.db", SearchOption.TopDirectoryOnly))
+                    {
+                        try { File.Delete(file); deleted++; }
+                        catch { skipped++; }
+                    }
+                    return Tuple.Create(deleted, skipped);
+                });
+                MaintenanceStatusText.Text = "اكتمل مسح ذاكرة الصور المصغّرة. الملفات المحذوفة: " + result.Item1 +
+                    " ملف / files; تم تخطي " + result.Item2 + " ملف / files. وسيعيد ويندوز إنشاء الصور المصغّرة. | Windows will rebuild thumbnails.";
+                AppendMaintenanceLog("ذاكرة الصور المصغّرة: " + result.Item1 + " محذوف / deleted; " + result.Item2 + " تم تخطيه / skipped.");
+            }
+            catch (Exception ex) { MaintenanceStatusText.Text = "Thumbnail cache could not be cleared: " + ex.Message; }
+            finally { SetMaintenanceBusy(false, null); }
+        }
+
+        private async void FlushDns_Click(object sender, RoutedEventArgs e)
+        {
+            if (_scanRunning) return;
+            if (MessageBox.Show("سيؤدي هذا إلى مسح ذاكرة DNS المؤقتة في ويندوز. لن يحذف سجل التصفح أو كلمات المرور المحفوظة. هل تريد المتابعة؟",
+                "مسح ذاكرة DNS | Flush DNS cache", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
+            SetMaintenanceBusy(true, "جارٍ مسح ذاكرة DNS في ويندوز… | Flushing DNS cache…");
+            try
+            {
+                await RunElevatedCommandAsync("ipconfig.exe", "/flushdns", 30000);
+                AppendMaintenanceLog("انتهى أمر ipconfig /flushdns. راجع نافذة ويندوز الظاهرة للتأكد من النتيجة. | Command finished; review the Windows console.");
+                MaintenanceStatusText.Text = "انتهى أمر مسح DNS. راجع نافذة ويندوز للتأكد. | DNS command finished; check the Windows console.";
+            }
+            catch (Exception ex) { MaintenanceStatusText.Text = "تعذّر مسح ذاكرة DNS: " + ex.Message; }
+            finally { SetMaintenanceBusy(false, null); }
+        }
+
+        private async void CheckDisk_Click(object sender, RoutedEventArgs e)
+        {
+            if (_scanRunning) return;
+            if (MessageBox.Show("سيشغّل هذا فحص NTFS عبر الإنترنت على قرص ويندوز باستخدام CHKDSK /scan، دون جدولة إصلاح خارج النظام. هل تريد المتابعة؟",
+                "فحص قرص النظام | Check system drive", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
+            SetMaintenanceBusy(true, "جارٍ بدء فحص القرص عبر ويندوز… | Starting online disk scan…");
+            try
+            {
+                string systemDrive = Path.GetPathRoot(Environment.SystemDirectory);
+                await RunElevatedCommandAsync("chkdsk.exe", systemDrive.TrimEnd(Path.DirectorySeparatorChar) + " /scan", 60 * 60 * 1000);
+                MaintenanceStatusText.Text = "انتهى فحص القرص. اقرأ نافذة CHKDSK للاطلاع على النتائج. | Disk check finished; review CHKDSK output.";
+                AppendMaintenanceLog("انتهى CHKDSK /scan. راجع نافذة ويندوز للاطلاع على التقرير التفصيلي. | Review the Windows console for details.");
+            }
+            catch (Exception ex) { MaintenanceStatusText.Text = "تعذّر إكمال فحص القرص: " + ex.Message; }
+            finally { SetMaintenanceBusy(false, null); }
+        }
+
+        private async void RepairWindows_Click(object sender, RoutedEventArgs e)
+        {
+            if (_scanRunning) return;
+            if (MessageBox.Show("يعمل الأمر DISM /Online /Cleanup-Image /RestoreHealth على إصلاح مكونات ويندوز. قد يستغرق وقتاً طويلاً وقد يستخدم Windows Update عند الحاجة. احفظ عملك أولاً. هل تريد المتابعة؟",
+                "إصلاح صورة ويندوز | Repair Windows image", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
+            SetMaintenanceBusy(true, "جارٍ بدء إصلاح DISM. ستظهر مطالبة ويندوز للحصول على موافقة المسؤول… | DISM starting; administrator approval required…");
+            try
+            {
+                await RunElevatedCommandAsync("dism.exe", "/Online /Cleanup-Image /RestoreHealth", 90 * 60 * 1000);
+                MaintenanceStatusText.Text = "انتهى DISM. راجع نافذة الأوامر لمعرفة النتيجة النهائية، وأعد تشغيل ويندوز إذا طلب ذلك. | Review DISM output; restart if requested.";
+                AppendMaintenanceLog("انتهى أمر DISM /RestoreHealth. لا يعتبر دانات الإصلاح ناجحاً قبل مراجعة النتيجة النهائية. | Review DISM final output to confirm.");
+            }
+            catch (Exception ex) { MaintenanceStatusText.Text = "DISM could not be completed: " + ex.Message; }
+            finally { SetMaintenanceBusy(false, null); }
+        }
+
+        private async void RepairSystemFiles_Click(object sender, RoutedEventArgs e)
+        {
+            if (_scanRunning) return;
+            if (MessageBox.Show("يفحص الأمر SFC /scannow ملفات نظام ويندوز المحمية ويصلح الملفات التالفة إن أمكن. قد يستغرق عدة دقائق. احفظ عملك أولاً. هل تريد المتابعة؟",
+                "إصلاح ملفات نظام ويندوز | Repair system files", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
+            SetMaintenanceBusy(true, "جارٍ تشغيل مدقق ملفات النظام. ستظهر مطالبة ويندوز للحصول على موافقة المسؤول… | SFC starting; administrator approval required…");
+            try
+            {
+                await RunElevatedCommandAsync("sfc.exe", "/scannow", 60 * 60 * 1000);
+                MaintenanceStatusText.Text = "انتهى SFC. راجع نافذة الأوامر لمعرفة ما إذا تم العثور على تلف وإصلاحه. | Review SFC output for findings.";
+                AppendMaintenanceLog("انتهى SFC /scannow. راجع نافذة ويندوز للاطلاع على النتيجة التفصيلية. | Review the Windows console for details.");
+            }
+            catch (Exception ex) { MaintenanceStatusText.Text = "تعذّر إكمال فحص وإصلاح ملفات النظام: " + ex.Message; }
+            finally { SetMaintenanceBusy(false, null); }
+        }
+
+        private static string RunCapturedCommand(string executable, string arguments, int timeoutMs)
+        {
+            var info = new ProcessStartInfo
+            {
+                FileName = executable, Arguments = arguments, UseShellExecute = false,
+                CreateNoWindow = true, RedirectStandardOutput = true, RedirectStandardError = true
+            };
+            using (var process = Process.Start(info))
+            {
+                if (process == null) throw new InvalidOperationException("Windows could not start " + executable + ".");
+                Task<string> stdout = process.StandardOutput.ReadToEndAsync();
+                Task<string> stderr = process.StandardError.ReadToEndAsync();
+                if (!process.WaitForExit(timeoutMs))
+                {
+                    try { process.Kill(); } catch { }
+                    throw new TimeoutException(executable + " exceeded its time limit.");
+                }
+                Task.WaitAll(stdout, stderr);
+                string output = (stdout.Result + Environment.NewLine + stderr.Result).Trim();
+                if (process.ExitCode != 0)
+                    throw new InvalidOperationException(string.IsNullOrWhiteSpace(output) ? executable + " returned exit code " + process.ExitCode : output);
+                return string.IsNullOrWhiteSpace(output) ? executable + " completed successfully." : output;
+            }
+        }
+
+        private async Task RunElevatedCommandAsync(string executable, string arguments, int timeoutMs)
+        {
+            await Task.Run(() =>
+            {
+                var info = new ProcessStartInfo
+                {
+                    FileName = executable, Arguments = arguments, UseShellExecute = true,
+                    Verb = "runas", CreateNoWindow = false
+                };
+                using (var process = Process.Start(info))
+                {
+                    if (process == null) throw new InvalidOperationException("Windows did not start " + executable + ".");
+                    if (!process.WaitForExit(timeoutMs))
+                    {
+                        try { process.Kill(); } catch { }
+                        throw new TimeoutException(executable + " exceeded its time limit. Treat the operation as incomplete.");
+                    }
+                    if (process.ExitCode != 0)
+                        throw new InvalidOperationException(executable + " returned exit code " + process.ExitCode + ". Review its console output.");
+                }
+            });
+        }
+
+        private void SetMaintenanceBusy(bool busy, string message)
+        {
+            _maintenanceRunning = busy;
+            SetMaintenanceButtonsEnabled(MaintenancePanel, !busy);
+            if (busy && !string.IsNullOrWhiteSpace(message)) MaintenanceStatusText.Text = message;
+        }
+
+        private static void SetMaintenanceButtonsEnabled(DependencyObject parent, bool enabled)
+        {
+            foreach (object child in LogicalTreeHelper.GetChildren(parent))
+            {
+                var button = child as System.Windows.Controls.Button;
+                if (button != null) button.IsEnabled = enabled;
+                var dependencyObject = child as DependencyObject;
+                if (dependencyObject != null) SetMaintenanceButtonsEnabled(dependencyObject, enabled);
+            }
+        }
+
+        private void AppendMaintenanceLog(string line)
+        {
+            MaintenanceLogBox.AppendText(line + Environment.NewLine);
+            MaintenanceLogBox.ScrollToEnd();
+        }
+
+        private void OpenStorageSettings_Click(object sender, RoutedEventArgs e) { OpenSettingsPage("ms-settings:storagesense"); }
+        private void OpenStartupSettings_Click(object sender, RoutedEventArgs e) { OpenSettingsPage("ms-settings:startupapps"); }
+        private void OpenNetworkSettings_Click(object sender, RoutedEventArgs e) { OpenSettingsPage("ms-settings:network-status"); }
+
+        private void OpenDriveOptimization_Click(object sender, RoutedEventArgs e)
+        {
+            try { Process.Start(new ProcessStartInfo { FileName = "dfrgui.exe", UseShellExecute = true }); }
+            catch (Exception ex) { MaintenanceStatusText.Text = "تعذّر فتح تحسين محركات الأقراص: " + ex.Message; }
+        }
+
+        private void OpenSettingsPage(string uri)
+        {
+            try { Process.Start(new ProcessStartInfo { FileName = uri, UseShellExecute = true }); }
+            catch (Exception ex) { MaintenanceStatusText.Text = "تعذّر فتح إعدادات ويندوز: " + ex.Message; }
         }
 
         private static string QuoteArgument(string value)
