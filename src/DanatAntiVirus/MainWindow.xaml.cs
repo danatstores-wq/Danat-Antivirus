@@ -270,7 +270,7 @@ namespace DanatAntiVirus
                 Task.WaitAll(outputTask, errorTask);
                 if (process.ExitCode != 0)
                     throw new InvalidOperationException("ClamAV version check failed: " + errorTask.Result.Trim());
-                Match match = Regex.Match(outputTask.Result, @"ClamAV\\s+(\\d+\\.\\d+\\.\\d+)", RegexOptions.IgnoreCase);
+                Match match = Regex.Match(outputTask.Result, @"ClamAV\s+(\d+\.\d+\.\d+)", RegexOptions.IgnoreCase);
                 Version version;
                 if (!match.Success || !Version.TryParse(match.Groups[1].Value, out version))
                     throw new InvalidOperationException("Danat could not verify the installed ClamAV version.");
