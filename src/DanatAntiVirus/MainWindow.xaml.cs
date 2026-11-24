@@ -832,22 +832,55 @@ namespace DanatAntiVirus
             string local = Path.GetFullPath(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData));
             if (string.IsNullOrWhiteSpace(temp) || !temp.StartsWith(local.TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
                 throw new InvalidOperationException("The resolved TEMP path is not inside this user's Local AppData folder.");
+            if (!Directory.Exists(temp)) return Tuple.Create(0, 0);
+
             DateTime cutoff = DateTime.Now.AddDays(-7);
             int deleted = 0, skipped = 0;
-            foreach (string file in Directory.GetFiles(temp, "*", SearchOption.TopDirectoryOnly))
+            var pending = new System.Collections.Generic.Stack<string>();
+            var visited = new System.Collections.Generic.List<string>();
+            pending.Push(temp);
+
+            // Walk only inside TEMP and never follow junctions or symbolic links.
+            while (pending.Count > 0)
             {
+                string current = pending.Pop();
+                visited.Add(current);
                 try
                 {
-                    if (File.GetLastWriteTime(file) >= cutoff) continue;
-                    File.Delete(file);
-                    deleted++;
+                    foreach (string file in Directory.GetFiles(current, "*", SearchOption.TopDirectoryOnly))
+                    {
+                        try
+                        {
+                            if ((File.GetAttributes(file) & FileAttributes.ReparsePoint) != 0) { skipped++; continue; }
+                            if (File.GetLastWriteTime(file) >= cutoff) continue;
+                            File.Delete(file);
+                            deleted++;
+                        }
+                        catch { skipped++; }
+                    }
+
+                    foreach (string directory in Directory.GetDirectories(current, "*", SearchOption.TopDirectoryOnly))
+                    {
+                        try
+                        {
+                            if ((File.GetAttributes(directory) & FileAttributes.ReparsePoint) == 0)
+                                pending.Push(directory);
+                        }
+                        catch { skipped++; }
+                    }
                 }
                 catch { skipped++; }
             }
-            // Remove only empty directories under TEMP; never recursively delete a directory tree.
-            foreach (string directory in Directory.GetDirectories(temp, "*", SearchOption.TopDirectoryOnly))
+
+            // Remove directories only when empty; never recursively delete a directory tree.
+            foreach (string directory in visited.OrderByDescending(p => p.Length))
             {
-                try { if (!Directory.EnumerateFileSystemEntries(directory).Any()) Directory.Delete(directory, false); }
+                if (string.Equals(directory, temp, StringComparison.OrdinalIgnoreCase)) continue;
+                try
+                {
+                    if (!Directory.EnumerateFileSystemEntries(directory).Any())
+                        Directory.Delete(directory, false);
+                }
                 catch { }
             }
             return Tuple.Create(deleted, skipped);
