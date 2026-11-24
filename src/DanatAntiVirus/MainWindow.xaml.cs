@@ -403,6 +403,16 @@ namespace DanatAntiVirus
                     CfaStatusText.Text = "OFF — Windows Controlled Folder Access is disabled. Open Windows settings to review this protection.";
                     CfaStatusText.Foreground = new SolidColorBrush(Color.FromRgb(255, 120, 100));
                 }
+                else if (mode == 3)
+                {
+                    CfaStatusText.Text = "PARTIAL PROTECTION — Windows blocks disk modification only; folder changes are not blocked by this mode.";
+                    CfaStatusText.Foreground = new SolidColorBrush(Color.FromRgb(255, 198, 92));
+                }
+                else if (mode == 4)
+                {
+                    CfaStatusText.Text = "AUDIT MODE (DISK MODIFICATION ONLY) — Windows records disk-modification attempts but does not block them.";
+                    CfaStatusText.Foreground = new SolidColorBrush(Color.FromRgb(255, 198, 92));
+                }
                 else
                 {
                     CfaStatusText.Text = "UNKNOWN MODE (" + mode + ") — review the Windows Security ransomware-protection page.";

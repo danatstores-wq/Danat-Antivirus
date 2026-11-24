@@ -12,7 +12,7 @@ This build integrates with the **Microsoft Defender Antivirus installation alrea
 - Defaults to report-only custom scans using `-DisableRemediation`, so files are not changed by that scan request.
 - Offers a separate, unchecked consent option to authorize Microsoft Defender's normal remediation actions. If selected and confirmed, Defender may quarantine or remove detections.
 - Provides a shortcut to Windows Security Protection history, where users can review Defender-managed actions and available restore options.
-- Reads the Windows Controlled Folder Access mode (off, audit, or enabled) from Defender preferences and provides a shortcut to the Windows ransomware-protection settings page. Danat does not silently enable or modify this Windows setting.
+- Reads the Windows Controlled Folder Access mode (disabled, enabled, audit, disk-modification-only block, or disk-modification-only audit) from Defender preferences and provides a shortcut to the Windows ransomware-protection settings page. Danat does not silently enable or modify this Windows setting.
 - Reads redirected Defender status output asynchronously to avoid blocking if PowerShell writes more output than a pipe buffer can hold.
 - Treats Defender exit code 2 as unresolved (malware may remain unremediated or a scan error occurred), never as a clean result.
 - Requests administrator privileges because Microsoft's command-line tool requires an elevated command prompt.
